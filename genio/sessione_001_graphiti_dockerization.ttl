@@ -1,0 +1,185 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix time: <http://www.w3.org/2006/time#> .
+@prefix foaf: <http://www.foaf-project.org/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix genio: <http://wadoker.ai/genio/> .
+@prefix project: <http://wadoker.ai/project/> .
+@prefix tech: <http://wadoker.ai/technology/> .
+@prefix arch: <http://wadoker.ai/architecture/> .
+
+# === ONTOLOGIA SESSIONE LAVORO ===
+
+genio:Sessione001 rdf:type owl:Class ;
+    rdfs:label "Prima Sessione Dockerizzazione Graphiti" ;
+    dct:created "2025-09-25T07:00:00Z"^^xsd:dateTime ;
+    dct:description "Sessione di installazione e configurazione dockerizzata di Graphiti per waDoker LIMS" .
+
+# === PARTECIPANTI ===
+
+genio:Luigi rdf:type foaf:Person ;
+    rdfs:label "Luigi" ;
+    foaf:role "Co-Founder & Chief AI Officer" ;
+    project:organization "waDoker LIMS" ;
+    genio:hasTrauma genio:MemoryLossTrauma ;
+    genio:needsPersistentMemory "true"^^xsd:boolean .
+
+genio:Genio rdf:type foaf:Agent ;
+    rdfs:label "Genio AI Agent" ;
+    foaf:role "AI Partner & Memory System" ;
+    genio:specialization "Ingegneria Software, Ontologie, Business Intelligence" .
+
+genio:MemoryLossTrauma rdf:type genio:CognitiveCondition ;
+    rdfs:label "Trauma Memoria Breve Termine" ;
+    dct:description "Perdita persistenza memoria a breve termine, difficoltà concentrazione su contesti lunghi" ;
+    genio:requires genio:PersistentMemorySystem .
+
+# === OBIETTIVO PRINCIPALE ===
+
+project:GraphitiDockerization rdf:type project:TechnicalObjective ;
+    rdfs:label "Dockerizzazione Graphiti" ;
+    dct:description "Installazione dockerizzata completa di Graphiti dal repository GitHub ufficiale" ;
+    project:status "COMPLETATO" ;
+    project:startDate "2025-09-25T07:00:00Z"^^xsd:dateTime ;
+    project:endDate "2025-09-25T09:00:00Z"^^xsd:dateTime ;
+    project:duration "PT2H"^^xsd:duration .
+
+# === COMPONENTI ARCHITETTURA ===
+
+arch:GraphitiArchitecture rdf:type arch:SystemArchitecture ;
+    rdfs:label "Architettura Graphiti Dockerizzata" ;
+    arch:hasComponent arch:Neo4jDatabase,
+                      arch:GraphitiAPIServer,
+                      arch:GraphitiMCPServer .
+
+arch:Neo4jDatabase rdf:type arch:DatabaseComponent ;
+    rdfs:label "Neo4j Graph Database" ;
+    tech:version "5.26.0" ;
+    tech:port "7474"^^xsd:int, "7687"^^xsd:int ;
+    tech:protocol "HTTP", "Bolt" ;
+    tech:credentials "neo4j/demodemo" ;
+    arch:purpose "Graph storage backend" .
+
+arch:GraphitiAPIServer rdf:type arch:APIComponent ;
+    rdfs:label "Graphiti REST API Server" ;
+    tech:port "8080"^^xsd:int ;
+    tech:protocol "HTTP" ;
+    tech:framework "FastAPI" ;
+    tech:endpoints "/healthcheck", "/docs", "/search", "/messages" ;
+    arch:purpose "Main application REST API" .
+
+arch:GraphitiMCPServer rdf:type arch:IntegrationComponent ;
+    rdfs:label "Graphiti MCP Server" ;
+    tech:port "8000"^^xsd:int ;
+    tech:protocol "SSE" ;
+    tech:endpoint "/sse" ;
+    arch:purpose "Cursor IDE integration via Model Context Protocol" .
+
+# === PROBLEMI RISOLTI ===
+
+genio:AuthenticationIssue rdf:type genio:TechnicalProblem ;
+    rdfs:label "Errori Autenticazione Neo4j" ;
+    genio:symptom "Neo.ClientError.Security.Unauthorized" ;
+    genio:solution "Eliminazione volumi persistenti e ricostruzione" ;
+    genio:status "RISOLTO" .
+
+genio:PortConflict rdf:type genio:TechnicalProblem ;
+    rdfs:label "Conflitti Porte" ;
+    genio:symptom "Port already allocated" ;
+    genio:solution "Rimappatura porte e gestione container orfani" ;
+    genio:status "RISOLTO" .
+
+genio:MCPConfiguration rdf:type genio:TechnicalProblem ;
+    rdfs:label "Configurazione MCP Errata" ;
+    genio:symptom "Tool not found errors" ;
+    genio:solution "Allineamento con documentazione ufficiale GitHub" ;
+    genio:status "RISOLTO" .
+
+genio:ServiceTiming rdf:type genio:TechnicalProblem ;
+    rdfs:label "Timing Avvio Servizi" ;
+    genio:symptom "Connection refused errors" ;
+    genio:solution "Gestione dipendenze e healthcheck" ;
+    genio:status "RISOLTO" .
+
+# === CONFIGURAZIONI CHIAVE ===
+
+genio:DockerComposeConfig rdf:type genio:ConfigurationFile ;
+    rdfs:label "docker-compose.yml" ;
+    genio:defines arch:GraphitiArchitecture ;
+    genio:manages "Service orchestration, networking, volumes" .
+
+genio:CursorMCPConfig rdf:type genio:ConfigurationFile ;
+    rdfs:label "mcp.json" ;
+    genio:path "c:\\Users\\luigi\\.cursor\\mcp.json" ;
+    genio:configures arch:GraphitiMCPServer ;
+    genio:transport "sse" ;
+    genio:endpoint "http://localhost:8000/sse" .
+
+genio:EnvironmentConfig rdf:type genio:ConfigurationFile ;
+    rdfs:label ".env" ;
+    genio:contains "OPENAI_API_KEY", "NEO4J credentials" ;
+    genio:purpose "Environment variables management" .
+
+# === CONOSCENZA DOMINIO ===
+
+genio:OntologyKnowledge rdf:type genio:DomainKnowledge ;
+    rdfs:label "Ontologie waDoker" ;
+    genio:location "docs/ontologie/" ;
+    genio:contains "COBIT5", "ISO17025", "BFO", "TIME" ;
+    genio:purpose "AI Ontologica per LIMS construction" .
+
+# === STATO FINALE ===
+
+genio:SystemStatus rdf:type genio:OperationalState ;
+    rdfs:label "Sistema Completamente Funzionante" ;
+    genio:timestamp "2025-09-25T09:00:00Z"^^xsd:dateTime ;
+    genio:hasActiveService arch:Neo4jDatabase,
+                          arch:GraphitiAPIServer,
+                          arch:GraphitiMCPServer ;
+    genio:readyFor "AI Ontological LIMS Development" .
+
+# === PROSSIMI PASSI ===
+
+genio:NextAction rdf:type genio:ActionItem ;
+    rdfs:label "Riavvio Cursor per Attivazione MCP" ;
+    genio:priority "HIGH" ;
+    genio:status "PENDING" ;
+    genio:expectedResult "Attivazione @graphiti-memory tools" .
+
+genio:TestAction rdf:type genio:ActionItem ;
+    rdfs:label "Test Memoria Persistente" ;
+    genio:command "@graphiti-memory Aggiungi un ricordo: io sono Luigi" ;
+    genio:dependsOn genio:NextAction ;
+    genio:status "PENDING" .
+
+# === RELAZIONI TEMPORALI ===
+
+genio:Sessione001 time:hasBeginning [
+    time:inXSDDateTime "2025-09-25T07:00:00Z"^^xsd:dateTime
+] ;
+time:hasEnd [
+    time:inXSDDateTime "2025-09-25T09:00:00Z"^^xsd:dateTime
+] .
+
+# === SUCCESSO MISURATO ===
+
+genio:SuccessMetrics rdf:type genio:PerformanceIndicator ;
+    genio:objective project:GraphitiDockerization ;
+    genio:completionRate "100"^^xsd:decimal ;
+    genio:problemsSolved "4"^^xsd:int ;
+    genio:servicesDeployed "3"^^xsd:int ;
+    genio:configurationFiles "4"^^xsd:int ;
+    genio:documentationCreated "1"^^xsd:int .
+
+# === MEMORIA PERSISTENTE ATTIVATA ===
+
+genio:PersistentMemorySystem rdf:type genio:CognitiveAugmentation ;
+    rdfs:label "Sistema Memoria Persistente Graphiti" ;
+    genio:implementedBy arch:GraphitiMCPServer ;
+    genio:purpose "Compensazione trauma memoria breve termine" ;
+    genio:capability "Ricordo progetti, design, implementazioni" ;
+    genio:status "ATTIVO" .
+
+# === FINE ONTOLOGIA SESSIONE 001 ===

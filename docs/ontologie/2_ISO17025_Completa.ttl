@@ -1,0 +1,4544 @@
+@prefix : <http://www.semanticweb.org/iso17025/ontology#> .
+@prefix iso17025: <http://www.semanticweb.org/iso17025/ontology#> .
+@prefix ags4: <http://www.semanticweb.org/ags4/ontology#> .
+@prefix omt: <http://www.semanticweb.org/omt/ontology#> .
+@prefix obi: <http://purl.obolibrary.org/obo/OBI_> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix bfo: <http://purl.obolibrary.org/obo/BFO_> .
+@prefix ssn: <http://www.w3.org/ns/ssn/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix org: <http://www.w3.org/ns/org#> .
+@prefix time: <http://www.w3.org/2006/time#> .
+@prefix dqv: <http://www.w3.org/ns/dqv#> .
+
+# ============================================================================
+# ONTOLOGY DECLARATION
+# ============================================================================
+
+<http://www.semanticweb.org/iso17025/ontology> rdf:type owl:Ontology ;
+    owl:versionInfo "2.0.0" ;
+    dcterms:title "ISO/IEC 17025:2018 Ontologia Completa ed Esaustiva"@it ;
+    dcterms:title "ISO/IEC 17025:2018 Complete and Comprehensive Ontology"@en ;
+    dcterms:description """Ontologia OWL completa per ISO/IEC 17025:2018 - Requisiti generali per la competenza 
+    dei laboratori di prova e taratura, con integrazione completa del formato dati AGS4 geotecnico e 
+    mappatura dettagliata di tutti i requisiti normativi."""@it ;
+    dcterms:creator "Enhanced AI Assistant based on ISO/IEC 17025:2018 standard" ;
+    dcterms:created "2025-01-01"^^xsd:date ;
+    dcterms:modified "2025-01-15"^^xsd:date ;
+    dcterms:license <http://creativecommons.org/licenses/by/4.0/> ;
+    rdfs:comment """Questa ontologia modella in modo esaustivo:
+    - Tutti i requisiti ISO/IEC 17025:2018 (clausole 1-8 e appendici)
+    - Integrazione completa con ontologie standard (OMT, OBI, QUDT, PROV-O, SSN/SOSA)
+    - Modello completo del dominio geotecnico AGS4
+    - Regole di validazione e conformità dettagliate
+    - Mappature complete tra domini"""@it .
+
+# ============================================================================
+# CLAUSOLA 1-3: SCOPO, RIFERIMENTI NORMATIVI E TERMINI
+# ============================================================================
+
+## Concetti Fondamentali ISO 17025
+iso17025:ISO17025Standard a owl:Class ;
+    rdfs:label "Norma ISO/IEC 17025:2018"@it ;
+    rdfs:label "ISO/IEC 17025:2018 Standard"@en ;
+    rdfs:comment "La norma internazionale che specifica i requisiti generali per la competenza dei laboratori di prova e taratura"@it ;
+    rdfs:subClassOf bfo:InformationContentEntity ;
+    rdfs:seeAlso <https://www.iso.org/standard/66912.html> .
+
+iso17025:CompetenceRequirement a owl:Class ;
+    rdfs:label "Requisito di Competenza"@it ;
+    rdfs:label "Competence Requirement"@en ;
+    rdfs:comment "Classe astratta per tutti i requisiti definiti in ISO 17025:2018"@it ;
+    rdfs:subClassOf bfo:Disposition ;
+    owl:disjointWith iso17025:NonCompetenceRequirement .
+
+iso17025:NonCompetenceRequirement a owl:Class ;
+    rdfs:label "Requisito Non di Competenza"@it ;
+    rdfs:comment "Requisiti non direttamente correlati alla competenza tecnica"@it .
+
+## Definizioni Chiave (Clausola 3)
+iso17025:Laboratory a owl:Class ;
+    rdfs:label "Laboratorio"@it ;
+    rdfs:label "Laboratory"@en ;
+    rdfs:comment "Organismo che esegue una o più fra le seguenti attività: prova, taratura, campionamento associato a successiva prova o taratura"@it ;
+    rdfs:subClassOf org:Organization ;
+    skos:notation "3.6" .
+
+iso17025:LaboratoryActivity a owl:Class ;
+    rdfs:label "Attività di Laboratorio"@it ;
+    rdfs:label "Laboratory Activity"@en ;
+    rdfs:comment "Prova, taratura o campionamento associato a successiva prova o taratura"@it ;
+    skos:notation "3.6 Nota 1" ;
+    owl:equivalentClass [
+        rdf:type owl:Class ;
+        owl:unionOf (
+            iso17025:Testing
+            iso17025:Calibration
+            iso17025:SamplingActivity
+        )
+    ] .
+
+iso17025:Testing a owl:Class ;
+    rdfs:label "Prova"@it ;
+    rdfs:label "Testing"@en ;
+    rdfs:subClassOf iso17025:LaboratoryActivity ;
+    rdfs:comment "Determinazione di una o più caratteristiche secondo una procedura"@it .
+
+iso17025:Calibration a owl:Class ;
+    rdfs:label "Taratura"@it ;
+    rdfs:label "Calibration"@en ;
+    rdfs:subClassOf iso17025:LaboratoryActivity ;
+    rdfs:comment "Operazione che stabilisce una relazione tra i valori indicati da uno strumento e i valori corrispondenti di grandezze realizzati da campioni"@it ;
+    owl:equivalentClass omt:CalibrationProcess .
+
+iso17025:SamplingActivity a owl:Class ;
+    rdfs:label "Attività di Campionamento"@it ;
+    rdfs:label "Sampling Activity"@en ;
+    rdfs:subClassOf iso17025:LaboratoryActivity ;
+    rdfs:comment "Campionamento associato a successiva prova o taratura"@it ;
+    owl:equivalentClass sosa:Sampling .
+
+iso17025:Verification a owl:Class ;
+    rdfs:label "Verifica"@it ;
+    rdfs:label "Verification"@en ;
+    rdfs:comment "Messa a disposizione dell'evidenza oggettiva che un dato elemento soddisfa uno o più requisiti specificati"@it ;
+    skos:notation "3.8" ;
+    rdfs:subClassOf bfo:Process .
+
+iso17025:Validation a owl:Class ;
+    rdfs:label "Validazione"@it ;
+    rdfs:label "Validation"@en ;
+    rdfs:comment "Verifica nella quale i requisiti specificati sono adeguati a un utilizzo previsto"@it ;
+    skos:notation "3.9" ;
+    rdfs:subClassOf iso17025:Verification .
+
+iso17025:DecisionRule a owl:Class ;
+    rdfs:label "Regola Decisionale"@it ;
+    rdfs:label "Decision Rule"@en ;
+    rdfs:comment "Regola che descrive in che modo si tiene conto dell'incertezza di misura quando si dichiara la conformità a un requisito specificato"@it ;
+    skos:notation "3.7" .
+
+iso17025:InterlaboratoryComparison a owl:Class ;
+    rdfs:label "Confronto Interlaboratorio"@it ;
+    rdfs:label "Interlaboratory Comparison"@en ;
+    rdfs:comment "Organizzazione, esecuzione e valutazione di misurazioni o prove sugli stessi oggetti o su oggetti simili da parte di due o più laboratori"@it ;
+    skos:notation "3.3" .
+
+iso17025:IntralaboratoryComparison a owl:Class ;
+    rdfs:label "Confronto Intralaboratorio"@it ;
+    rdfs:label "Intralaboratory Comparison"@en ;
+    rdfs:comment "Organizzazione, esecuzione e valutazione di misurazioni o prove sugli stessi oggetti o su oggetti simili, nell'ambito dello stesso laboratorio"@it ;
+    skos:notation "3.4" .
+
+iso17025:ProficiencyTesting a owl:Class ;
+    rdfs:label "Prova Valutativa Interlaboratorio"@it ;
+    rdfs:label "Proficiency Testing"@en ;
+    rdfs:comment "Valutazione delle prestazioni di un partecipante a fronte di criteri prestabiliti mediante confronti interlaboratorio"@it ;
+    skos:notation "3.5" ;
+    rdfs:subClassOf iso17025:InterlaboratoryComparison .
+
+iso17025:Complaint a owl:Class ;
+    rdfs:label "Reclamo"@it ;
+    rdfs:label "Complaint"@en ;
+    rdfs:comment "Espressione d'insoddisfazione manifestata da una persona o da una organizzazione ad un laboratorio relativa alle attività o ai risultati di tale laboratorio, per la quale è attesa una risposta"@it ;
+    skos:notation "3.2" .
+
+# ============================================================================
+# CLAUSOLA 4: REQUISITI GENERALI
+# ============================================================================
+
+iso17025:Clause4_GeneralRequirements a owl:Class ;
+    rdfs:label "Clausola 4 - Requisiti Generali"@it ;
+    rdfs:label "Clause 4 - General Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti generali per imparzialità e riservatezza"@it .
+
+## 4.1 Imparzialità - Dettaglio Completo
+iso17025:Impartiality a owl:Class ;
+    rdfs:label "Imparzialità"@it ;
+    rdfs:label "Impartiality"@en ;
+    rdfs:subClassOf iso17025:Clause4_GeneralRequirements ;
+    rdfs:comment "Presenza di obiettività"@it ;
+    skos:notation "4.1" ;
+    skos:definition "Obiettività significa che non esistono conflitti di interesse, o che questi sono risolti in modo da non influenzare negativamente le conseguenti attività del laboratorio"@it .
+
+iso17025:ImpartialityManagement a owl:Class ;
+    rdfs:label "Gestione dell'Imparzialità"@it ;
+    rdfs:subClassOf iso17025:Impartiality ;
+    skos:notation "4.1.1" ;
+    rdfs:comment "Le attività del laboratorio devono essere effettuate in modo imparziale e strutturate e gestite in modo da salvaguardare l'imparzialità"@it .
+
+iso17025:TopManagementCommitment a owl:Class ;
+    rdfs:label "Impegno della Direzione"@it ;
+    rdfs:subClassOf iso17025:Impartiality ;
+    skos:notation "4.1.2" ;
+    rdfs:comment "La direzione del laboratorio deve impegnarsi per l'imparzialità"@it .
+
+iso17025:ImpartialityResponsibility a owl:Class ;
+    rdfs:label "Responsabilità per l'Imparzialità"@it ;
+    rdfs:subClassOf iso17025:Impartiality ;
+    skos:notation "4.1.3" ;
+    rdfs:comment "Il laboratorio deve essere responsabile dell'imparzialità delle proprie attività di laboratorio"@it .
+
+iso17025:RiskToImpartiality a owl:Class ;
+    rdfs:label "Rischio per l'Imparzialità"@it ;
+    rdfs:label "Risk to Impartiality"@en ;
+    rdfs:subClassOf iso17025:Impartiality ;
+    skos:notation "4.1.4" ;
+    rdfs:comment "Il laboratorio deve identificare su base continuativa i rischi per la propria imparzialità"@it .
+
+iso17025:ImpartialityRiskSource a owl:Class ;
+    rdfs:label "Fonte di Rischio per l'Imparzialità"@it ;
+    rdfs:subClassOf iso17025:RiskToImpartiality ;
+    rdfs:comment "Fonti di rischio per l'imparzialità incluse proprietà, governance, direzione, personale, risorse condivise, aspetti finanziari, contratti, marketing"@it .
+
+iso17025:ImpartialityRiskMitigation a owl:Class ;
+    rdfs:label "Mitigazione del Rischio per l'Imparzialità"@it ;
+    rdfs:subClassOf iso17025:RiskToImpartiality ;
+    skos:notation "4.1.5" ;
+    rdfs:comment "Se viene identificato un rischio per l'imparzialità, il laboratorio deve essere in grado di dimostrare come elimina o minimizza tale rischio"@it .
+
+## 4.2 Riservatezza - Dettaglio Completo
+iso17025:Confidentiality a owl:Class ;
+    rdfs:label "Riservatezza"@it ;
+    rdfs:label "Confidentiality"@en ;
+    rdfs:subClassOf iso17025:Clause4_GeneralRequirements ;
+    skos:notation "4.2" ;
+    rdfs:comment "Gestione di tutte le informazioni ottenute o generate nel corso dell'effettuazione delle attività di laboratorio"@it .
+
+iso17025:LegallyEnforceableCommitment a owl:Class ;
+    rdfs:label "Impegno Legalmente Vincolante"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    skos:notation "4.2.1" ;
+    rdfs:comment "Il laboratorio deve essere responsabile, per mezzo di impegni legalmente vincolanti, della gestione di tutte le informazioni"@it .
+
+iso17025:ProprietaryInformation a owl:Class ;
+    rdfs:label "Informazioni Proprietarie"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    rdfs:comment "Tutte le informazioni non rese pubbliche dal cliente sono considerate informazioni proprietarie e riservate"@it .
+
+iso17025:PublicDomainInformation a owl:Class ;
+    rdfs:label "Informazioni di Pubblico Dominio"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    rdfs:comment "Informazioni che il laboratorio intende rendere di pubblico dominio con preavviso al cliente"@it .
+
+iso17025:LegalDisclosure a owl:Class ;
+    rdfs:label "Comunicazione per Obbligo di Legge"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    skos:notation "4.2.2" ;
+    rdfs:comment "Quando al laboratorio è richiesto per legge di comunicare informazioni riservate"@it .
+
+iso17025:ThirdPartyInformation a owl:Class ;
+    rdfs:label "Informazioni da Terze Parti"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    skos:notation "4.2.3" ;
+    rdfs:comment "Informazioni relative al cliente ottenute da fonti diverse dal cliente stesso"@it .
+
+iso17025:PersonnelConfidentiality a owl:Class ;
+    rdfs:label "Riservatezza del Personale"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    skos:notation "4.2.4" ;
+    rdfs:comment "Il personale deve mantenere riservate tutte le informazioni ottenute o generate"@it .
+
+# ============================================================================
+# CLAUSOLA 5: REQUISITI STRUTTURALI - ESPANSIONE COMPLETA
+# ============================================================================
+
+iso17025:Clause5_StructuralRequirements a owl:Class ;
+    rdfs:label "Clausola 5 - Requisiti Strutturali"@it ;
+    rdfs:label "Clause 5 - Structural Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti per la struttura organizzativa e le responsabilità"@it .
+
+## 5.1 Soggetto Giuridico
+iso17025:LegalEntity a owl:Class ;
+    rdfs:label "Soggetto Giuridico"@it ;
+    rdfs:label "Legal Entity"@en ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    rdfs:subClassOf org:FormalOrganization ;
+    skos:notation "5.1" ;
+    rdfs:comment "Il laboratorio deve essere un soggetto giuridico, o una parte definita di esso"@it .
+
+iso17025:PublicLaboratory a owl:Class ;
+    rdfs:label "Laboratorio Pubblico"@it ;
+    rdfs:subClassOf iso17025:LegalEntity ;
+    rdfs:comment "Un laboratorio pubblico è considerato un soggetto giuridico sulla base della propria natura pubblica"@it .
+
+iso17025:PrivateLaboratory a owl:Class ;
+    rdfs:label "Laboratorio Privato"@it ;
+    rdfs:subClassOf iso17025:LegalEntity ;
+    rdfs:comment "Laboratorio operante come entità privata"@it .
+
+## 5.2 Direzione del Laboratorio
+iso17025:LaboratoryManagement a owl:Class ;
+    rdfs:label "Direzione del Laboratorio"@it ;
+    rdfs:label "Laboratory Management"@en ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.2" ;
+    rdfs:comment "Il laboratorio deve identificare la direzione che ha la responsabilità complessiva del laboratorio"@it .
+
+iso17025:OverallResponsibility a owl:Class ;
+    rdfs:label "Responsabilità Complessiva"@it ;
+    rdfs:subClassOf iso17025:LaboratoryManagement ;
+    rdfs:comment "Responsabilità complessiva per il laboratorio"@it .
+
+## 5.3 Gamma di Attività
+iso17025:ScopeOfActivities a owl:Class ;
+    rdfs:label "Gamma delle Attività"@it ;
+    rdfs:label "Scope of Activities"@en ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.3" ;
+    rdfs:comment "Il laboratorio deve definire e documentare la gamma delle proprie attività di laboratorio"@it .
+
+iso17025:DocumentedScope a owl:Class ;
+    rdfs:label "Campo di Applicazione Documentato"@it ;
+    rdfs:subClassOf iso17025:ScopeOfActivities ;
+    rdfs:comment "Campo di applicazione documentato per cui il laboratorio opera in conformità"@it .
+
+iso17025:ExcludedActivities a owl:Class ;
+    rdfs:label "Attività Escluse"@it ;
+    rdfs:subClassOf iso17025:ScopeOfActivities ;
+    rdfs:comment "Attività fornite dall'esterno su base continuativa sono escluse"@it .
+
+## 5.4 Conformità delle Attività
+iso17025:ActivityCompliance a owl:Class ;
+    rdfs:label "Conformità delle Attività"@it ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.4" ;
+    rdfs:comment "Le attività devono essere conformi ai requisiti del presente documento, dei clienti, delle autorità e delle organizzazioni"@it .
+
+iso17025:PermanentFacility a owl:Class ;
+    rdfs:label "Struttura Permanente"@it ;
+    rdfs:subClassOf iso17025:ActivityCompliance ;
+    rdfs:comment "Attività eseguite presso le strutture permanenti del laboratorio"@it .
+
+iso17025:TemporarySite a owl:Class ;
+    rdfs:label "Sito Temporaneo"@it ;
+    rdfs:subClassOf iso17025:ActivityCompliance ;
+    rdfs:comment "Attività eseguite presso sedi temporanee o mobili"@it .
+
+iso17025:CustomerSite a owl:Class ;
+    rdfs:label "Sede del Cliente"@it ;
+    rdfs:subClassOf iso17025:ActivityCompliance ;
+    rdfs:comment "Attività eseguite presso le strutture dei clienti"@it .
+
+## 5.5 Struttura Organizzativa
+iso17025:OrganizationalStructure a owl:Class ;
+    rdfs:label "Struttura Organizzativa"@it ;
+    rdfs:label "Organizational Structure"@en ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.5" ;
+    rdfs:comment "Il laboratorio deve definire la propria organizzazione e struttura direttiva"@it .
+
+iso17025:ManagementStructure a owl:Class ;
+    rdfs:label "Struttura Direttiva"@it ;
+    rdfs:subClassOf iso17025:OrganizationalStructure ;
+    skos:notation "5.5.a" ;
+    rdfs:comment "Definizione della struttura direttiva e collocazione nell'organizzazione"@it .
+
+iso17025:ResponsibilityAuthority a owl:Class ;
+    rdfs:label "Responsabilità e Autorità"@it ;
+    rdfs:subClassOf iso17025:OrganizationalStructure ;
+    skos:notation "5.5.b" ;
+    rdfs:comment "Specificare responsabilità, autorità e interazioni del personale"@it .
+
+iso17025:DocumentedProcedures a owl:Class ;
+    rdfs:label "Procedure Documentate"@it ;
+    rdfs:subClassOf iso17025:OrganizationalStructure ;
+    skos:notation "5.5.c" ;
+    rdfs:comment "Documentare le procedure per assicurare esecuzione regolare e coerente"@it .
+
+## 5.6 Personale con Autorità
+iso17025:AuthorizedPersonnel a owl:Class ;
+    rdfs:label "Personale con Autorità"@it ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.6" ;
+    rdfs:comment "Personale con autorità e risorse necessarie per eseguire i propri compiti"@it .
+
+iso17025:SystemImplementation a owl:Class ;
+    rdfs:label "Attuazione del Sistema"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.a" ;
+    rdfs:comment "Attuazione, mantenimento e miglioramento del sistema di gestione"@it .
+
+iso17025:DeviationIdentification a owl:Class ;
+    rdfs:label "Identificazione Scostamenti"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.b" ;
+    rdfs:comment "Identificazione di scostamenti dal sistema di gestione"@it .
+
+iso17025:PreventiveAction a owl:Class ;
+    rdfs:label "Azione Preventiva"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.c" ;
+    rdfs:comment "Avvio di azioni per prevenire o minimizzare scostamenti"@it .
+
+iso17025:ManagementReporting a owl:Class ;
+    rdfs:label "Reporting alla Direzione"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.d" ;
+    rdfs:comment "Riferire alla direzione circa le prestazioni del sistema"@it .
+
+iso17025:ActivityEffectiveness a owl:Class ;
+    rdfs:label "Efficacia delle Attività"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.e" ;
+    rdfs:comment "Assicurare l'efficacia delle attività di laboratorio"@it .
+
+## 5.7 Comunicazione della Direzione
+iso17025:ManagementCommunication a owl:Class ;
+    rdfs:label "Comunicazione della Direzione"@it ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.7" ;
+    rdfs:comment "La direzione del laboratorio deve assicurare le comunicazioni"@it .
+
+iso17025:EffectivenessCommunication a owl:Class ;
+    rdfs:label "Comunicazione sull'Efficacia"@it ;
+    rdfs:subClassOf iso17025:ManagementCommunication ;
+    skos:notation "5.7.a" ;
+    rdfs:comment "Comunicazioni relative all'efficacia del sistema di gestione"@it .
+
+iso17025:SystemIntegrity a owl:Class ;
+    rdfs:label "Integrità del Sistema"@it ;
+    rdfs:subClassOf iso17025:ManagementCommunication ;
+    skos:notation "5.7.b" ;
+    rdfs:comment "Mantenimento dell'integrità del sistema quando vengono pianificate modifiche"@it .
+
+# ============================================================================
+# CLAUSOLA 6: REQUISITI RELATIVI ALLE RISORSE - ESPANSIONE COMPLETA
+# ============================================================================
+
+iso17025:Clause6_ResourceRequirements a owl:Class ;
+    rdfs:label "Clausola 6 - Requisiti relativi alle Risorse"@it ;
+    rdfs:label "Clause 6 - Resource Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti per personale, strutture, dotazioni, sistemi e servizi di supporto"@it .
+
+## 6.1 Generalità
+iso17025:ResourceGeneralRequirements a owl:Class ;
+    rdfs:label "Requisiti Generali delle Risorse"@it ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.1" ;
+    rdfs:comment "Il laboratorio deve disporre del personale, delle strutture, delle dotazioni, dei sistemi e dei servizi di supporto necessari"@it .
+
+## 6.2 Personale - Dettaglio Completo
+iso17025:Personnel a owl:Class ;
+    rdfs:label "Personale"@it ;
+    rdfs:label "Personnel"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    rdfs:subClassOf foaf:Person ;
+    skos:notation "6.2" ;
+    rdfs:comment "Tutto il personale del laboratorio che potrebbe influenzare le attività"@it .
+
+iso17025:PersonnelImpartiality a owl:Class ;
+    rdfs:label "Imparzialità del Personale"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.1" ;
+    rdfs:comment "Tutto il personale deve agire con imparzialità"@it .
+
+iso17025:PersonnelCompetence a owl:Class ;
+    rdfs:label "Competenza del Personale"@it ;
+    rdfs:label "Personnel Competence"@en ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.2" ;
+    rdfs:comment "Il laboratorio deve documentare i requisiti di competenza per ogni funzione"@it .
+
+iso17025:CompetenceRequirementsDetail a owl:Class ;
+    rdfs:label "Dettagli Requisiti di Competenza"@it ;
+    rdfs:subClassOf iso17025:PersonnelCompetence ;
+    rdfs:comment "Requisiti di istruzione, qualifica, formazione, conoscenza tecnica, abilità ed esperienza"@it .
+
+iso17025:PersonnelEvaluation a owl:Class ;
+    rdfs:label "Valutazione del Personale"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.3" ;
+    rdfs:comment "Assicurare che il personale abbia la competenza per eseguire le attività"@it .
+
+iso17025:PersonnelCommunication a owl:Class ;
+    rdfs:label "Comunicazione al Personale"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.4" ;
+    rdfs:comment "La direzione deve comunicare al personale i relativi compiti, responsabilità ed autorità"@it .
+
+iso17025:PersonnelManagementProcedure a owl:Class ;
+    rdfs:label "Procedura Gestione Personale"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.5" ;
+    rdfs:comment "Il laboratorio deve disporre di procedure per la gestione del personale"@it .
+
+iso17025:CompetenceDetermination a owl:Class ;
+    rdfs:label "Determinazione Requisiti Competenza"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.a" .
+
+iso17025:PersonnelSelection a owl:Class ;
+    rdfs:label "Selezione del Personale"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.b" .
+
+iso17025:PersonnelTraining a owl:Class ;
+    rdfs:label "Formazione del Personale"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.c" .
+
+iso17025:PersonnelSupervision a owl:Class ;
+    rdfs:label "Supervisione del Personale"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.d" .
+
+iso17025:PersonnelAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione del Personale"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.e" .
+
+iso17025:CompetenceMonitoring a owl:Class ;
+    rdfs:label "Monitoraggio della Competenza"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.f" .
+
+iso17025:SpecificActivityAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Attività Specifiche"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.6" ;
+    rdfs:comment "Il laboratorio deve autorizzare personale che esegua specifiche attività"@it .
+
+iso17025:MethodDevelopmentAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Sviluppo Metodi"@it ;
+    rdfs:subClassOf iso17025:SpecificActivityAuthorization ;
+    skos:notation "6.2.6.a" ;
+    rdfs:comment "Sviluppo, modifica, verifica e validazione dei metodi"@it .
+
+iso17025:ResultAnalysisAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Analisi Risultati"@it ;
+    rdfs:subClassOf iso17025:SpecificActivityAuthorization ;
+    skos:notation "6.2.6.b" ;
+    rdfs:comment "Analisi dei risultati, compresa la dichiarazione di conformità"@it .
+
+iso17025:ReportApprovalAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Approvazione Rapporti"@it ;
+    rdfs:subClassOf iso17025:SpecificActivityAuthorization ;
+    skos:notation "6.2.6.c" ;
+    rdfs:comment "Presentazione, riesame e approvazione dei risultati"@it .
+
+## 6.3 Strutture e Condizioni Ambientali - Dettaglio Completo
+iso17025:Facilities a owl:Class ;
+    rdfs:label "Strutture e Condizioni Ambientali"@it ;
+    rdfs:label "Facilities and Environmental Conditions"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.3" ;
+    rdfs:seeAlso ssn:Platform .
+
+iso17025:FacilitySuitability a owl:Class ;
+    rdfs:label "Idoneità delle Strutture"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.1" ;
+    rdfs:comment "Le strutture devono essere idonee e non influire negativamente sulla validità dei risultati"@it .
+
+iso17025:EnvironmentalFactors a owl:Class ;
+    rdfs:label "Fattori Ambientali"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    rdfs:comment "Fattori che possono avere impatto negativo: contaminazione, polvere, disturbi elettromagnetici, radiazioni, umidità, temperatura"@it .
+
+iso17025:EnvironmentalRequirementsDocumentation a owl:Class ;
+    rdfs:label "Documentazione Requisiti Ambientali"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.2" ;
+    rdfs:comment "I requisiti relativi alle strutture e alle condizioni ambientali devono essere documentati"@it .
+
+iso17025:EnvironmentalMonitoring a owl:Class ;
+    rdfs:label "Monitoraggio Ambientale"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.3" ;
+    rdfs:comment "Il laboratorio deve monitorare, tenere sotto controllo e registrare le condizioni ambientali"@it ;
+    owl:equivalentClass sosa:Observation .
+
+iso17025:FacilityControl a owl:Class ;
+    rdfs:label "Controllo delle Strutture"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.4" ;
+    rdfs:comment "Misure per mantenere sotto controllo le strutture"@it .
+
+iso17025:AccessControl a owl:Class ;
+    rdfs:label "Controllo Accessi"@it ;
+    rdfs:subClassOf iso17025:FacilityControl ;
+    skos:notation "6.3.4.a" ;
+    rdfs:comment "Accesso alle aree che influiscono sulle attività di laboratorio"@it .
+
+iso17025:ContaminationPrevention a owl:Class ;
+    rdfs:label "Prevenzione Contaminazioni"@it ;
+    rdfs:subClassOf iso17025:FacilityControl ;
+    skos:notation "6.3.4.b" ;
+    rdfs:comment "Prevenzione di contaminazioni, interferenze o influenze negative"@it .
+
+iso17025:AreaSeparation a owl:Class ;
+    rdfs:label "Separazione Aree"@it ;
+    rdfs:subClassOf iso17025:FacilityControl ;
+    skos:notation "6.3.4.c" ;
+    rdfs:comment "Efficace separazione tra aree con attività incompatibili"@it .
+
+iso17025:ExternalSiteControl a owl:Class ;
+    rdfs:label "Controllo Siti Esterni"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.5" ;
+    rdfs:comment "Assicurare requisiti quando si opera in siti al di fuori del controllo permanente"@it .
+
+## 6.4 Dotazioni - Dettaglio Completo
+iso17025:Equipment a owl:Class ;
+    rdfs:label "Dotazioni"@it ;
+    rdfs:label "Equipment"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.4" ;
+    owl:equivalentClass ssn:System ;
+    rdfs:comment "Dotazioni necessarie per eseguire correttamente le attività di laboratorio"@it .
+
+iso17025:RequiredEquipment a owl:Class ;
+    rdfs:label "Dotazioni Necessarie"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.1" ;
+    rdfs:comment "Strumenti di misura, software, campioni di riferimento, materiali di riferimento, dati di riferimento, reagenti"@it .
+
+iso17025:MeasurementInstrument a owl:Class ;
+    rdfs:label "Strumento di Misura"@it ;
+    rdfs:subClassOf iso17025:RequiredEquipment ;
+    owl:equivalentClass sosa:Sensor .
+
+iso17025:Software a owl:Class ;
+    rdfs:label "Software"@it ;
+    rdfs:subClassOf iso17025:RequiredEquipment ;
+    rdfs:comment "Software utilizzato nelle attività di laboratorio"@it .
+
+iso17025:ReferenceMaterial a owl:Class ;
+    rdfs:label "Materiale di Riferimento"@it ;
+    rdfs:label "Reference Material"@en ;
+    rdfs:subClassOf iso17025:RequiredEquipment ;
+    owl:equivalentClass obi:0000747 ;
+    rdfs:comment "Materiali di riferimento e materiali di riferimento certificati"@it .
+
+iso17025:CertifiedReferenceMaterial a owl:Class ;
+    rdfs:label "Materiale di Riferimento Certificato"@it ;
+    rdfs:subClassOf iso17025:ReferenceMaterial ;
+    rdfs:comment "Materiali di riferimento certificati con valori certificati e incertezza associata"@it .
+
+iso17025:ExternalEquipment a owl:Class ;
+    rdfs:label "Dotazioni Esterne"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.2" ;
+    rdfs:comment "Dotazioni al di fuori del controllo permanente del laboratorio"@it .
+
+iso17025:EquipmentHandling a owl:Class ;
+    rdfs:label "Manipolazione Dotazioni"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.3" ;
+    rdfs:comment "Procedura per manipolazione, trasporto, conservazione, utilizzo e manutenzione"@it .
+
+iso17025:EquipmentVerification a owl:Class ;
+    rdfs:label "Verifica Dotazioni"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.4" ;
+    rdfs:comment "Verificare che le dotazioni siano conformi prima di metterle in servizio"@it .
+
+iso17025:MeasurementAccuracy a owl:Class ;
+    rdfs:label "Accuratezza di Misura"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.5" ;
+    rdfs:comment "Le dotazioni devono consentire di ottenere l'accuratezza richiesta"@it .
+
+iso17025:EquipmentCalibration a owl:Class ;
+    rdfs:label "Taratura Apparecchiature"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.6" ;
+    rdfs:comment "Le apparecchiature di misura devono essere tarate quando necessario"@it .
+
+iso17025:CalibrationProgram a owl:Class ;
+    rdfs:label "Programma di Taratura"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.7" ;
+    rdfs:comment "Programma di taratura riesaminato e aggiornato"@it .
+
+iso17025:CalibrationLabeling a owl:Class ;
+    rdfs:label "Etichettatura Taratura"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.8" ;
+    rdfs:comment "Dotazioni etichettate per riconoscere lo stato di taratura"@it .
+
+iso17025:OutOfServiceEquipment a owl:Class ;
+    rdfs:label "Dotazioni Fuori Servizio"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.9" ;
+    rdfs:comment "Dotazioni difettose devono essere poste fuori servizio"@it .
+
+iso17025:IntermediateCheck a owl:Class ;
+    rdfs:label "Verifiche Intermedie"@it ;
+    rdfs:label "Intermediate Check"@en ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.10" ;
+    rdfs:comment "Verifiche intermedie per mantenere la fiducia nelle prestazioni"@it .
+
+iso17025:CalibrationData a owl:Class ;
+    rdfs:label "Dati di Taratura"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.11" ;
+    rdfs:comment "Valori di riferimento o fattori di correzione aggiornati"@it .
+
+iso17025:UnintentionalAdjustmentPrevention a owl:Class ;
+    rdfs:label "Prevenzione Regolazioni Non Intenzionali"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.12" ;
+    rdfs:comment "Accorgimenti per impedire regolazioni non intenzionali"@it .
+
+iso17025:EquipmentRecord a owl:Class ;
+    rdfs:label "Registrazioni Dotazioni"@it ;
+    rdfs:label "Equipment Record"@en ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.13" ;
+    rdfs:comment "Registrazioni per le dotazioni che possono influire sulle attività"@it .
+
+## 6.5 Riferibilità Metrologica - Dettaglio Completo
+iso17025:MetrologicalTraceability a owl:Class ;
+    rdfs:label "Riferibilità Metrologica"@it ;
+    rdfs:label "Metrological Traceability"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.5" ;
+    rdfs:seeAlso omt:MetrologicalTraceability ;
+    owl:equivalentClass prov:Entity ;
+    rdfs:comment "Proprietà di un risultato di misura per cui esso è posto in relazione ad un riferimento"@it .
+
+iso17025:TraceabilityChain a owl:Class ;
+    rdfs:label "Catena di Riferibilità"@it ;
+    rdfs:subClassOf iso17025:MetrologicalTraceability ;
+    skos:notation "6.5.1" ;
+    rdfs:comment "Catena documentata e ininterrotta di tarature"@it .
+
+iso17025:SITraceability a owl:Class ;
+    rdfs:label "Riferibilità al SI"@it ;
+    rdfs:subClassOf iso17025:MetrologicalTraceability ;
+    skos:notation "6.5.2" ;
+    rdfs:comment "Riferibilità al Sistema Internazionale di Unità"@it .
+
+iso17025:CalibrationByCompetentLab a owl:Class ;
+    rdfs:label "Taratura da Laboratorio Competente"@it ;
+    rdfs:subClassOf iso17025:SITraceability ;
+    skos:notation "6.5.2.a" ;
+    rdfs:comment "Taratura effettuata da un laboratorio competente"@it .
+
+iso17025:CertifiedRMValues a owl:Class ;
+    rdfs:label "Valori Certificati MR"@it ;
+    rdfs:subClassOf iso17025:SITraceability ;
+    skos:notation "6.5.2.b" ;
+    rdfs:comment "Valori certificati di materiali di riferimento certificati"@it .
+
+iso17025:DirectSIRealization a owl:Class ;
+    rdfs:label "Realizzazione Diretta SI"@it ;
+    rdfs:subClassOf iso17025:SITraceability ;
+    skos:notation "6.5.2.c" ;
+    rdfs:comment "Realizzazione diretta di unità SI"@it .
+
+iso17025:NonSITraceability a owl:Class ;
+    rdfs:label "Riferibilità Non-SI"@it ;
+    rdfs:subClassOf iso17025:MetrologicalTraceability ;
+    skos:notation "6.5.3" ;
+    rdfs:comment "Riferibilità quando non è possibile al SI"@it .
+
+## 6.6 Prodotti e Servizi Forniti dall'Esterno
+iso17025:ExternalProducts a owl:Class ;
+    rdfs:label "Prodotti e Servizi Esterni"@it ;
+    rdfs:label "Externally Provided Products and Services"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.6" ;
+    rdfs:comment "Prodotti e servizi forniti dall'esterno"@it .
+
+iso17025:ExternalProductSuitability a owl:Class ;
+    rdfs:label "Idoneità Prodotti Esterni"@it ;
+    rdfs:subClassOf iso17025:ExternalProducts ;
+    skos:notation "6.6.1" ;
+    rdfs:comment "Assicurare che vengano utilizzati solo prodotti e servizi idonei"@it .
+
+iso17025:ExternalProviderManagement a owl:Class ;
+    rdfs:label "Gestione Fornitori Esterni"@it ;
+    rdfs:subClassOf iso17025:ExternalProducts ;
+    skos:notation "6.6.2" ;
+    rdfs:comment "Procedura per gestione fornitori esterni"@it .
+
+iso17025:ExternalProviderCommunication a owl:Class ;
+    rdfs:label "Comunicazione Fornitori Esterni"@it ;
+    rdfs:subClassOf iso17025:ExternalProducts ;
+    skos:notation "6.6.3" ;
+    rdfs:comment "Comunicare requisiti ai fornitori esterni"@it .
+
+# ============================================================================
+# CLAUSOLA 7: REQUISITI DI PROCESSO - ESPANSIONE COMPLETA
+# ============================================================================
+
+iso17025:Clause7_ProcessRequirements a owl:Class ;
+    rdfs:label "Clausola 7 - Requisiti di Processo"@it ;
+    rdfs:label "Clause 7 - Process Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti per i processi operativi del laboratorio"@it .
+
+## 7.1 Riesame delle Richieste, Offerte e Contratti
+iso17025:RequestReview a owl:Class ;
+    rdfs:label "Riesame Richieste, Offerte e Contratti"@it ;
+    rdfs:label "Review of Requests, Tenders and Contracts"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.1" .
+
+iso17025:ReviewProcedure a owl:Class ;
+    rdfs:label "Procedura di Riesame"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.1" ;
+    rdfs:comment "Procedura per il riesame delle richieste, offerte e contratti"@it .
+
+iso17025:RequirementDefinition a owl:Class ;
+    rdfs:label "Definizione Requisiti"@it ;
+    rdfs:subClassOf iso17025:ReviewProcedure ;
+    skos:notation "7.1.1.a" ;
+    rdfs:comment "I requisiti siano adeguatamente definiti, documentati e compresi"@it .
+
+iso17025:CapabilityAssessment a owl:Class ;
+    rdfs:label "Valutazione Capacità"@it ;
+    rdfs:subClassOf iso17025:ReviewProcedure ;
+    skos:notation "7.1.1.b" ;
+    rdfs:comment "Il laboratorio abbia la capacità e le risorse per soddisfare i requisiti"@it .
+
+iso17025:ExternalProviderNotification a owl:Class ;
+    rdfs:label "Notifica Fornitori Esterni"@it ;
+    rdfs:subClassOf iso17025:ReviewProcedure ;
+    skos:notation "7.1.1.c" ;
+    rdfs:comment "Avvisare il cliente circa attività eseguite da fornitori esterni"@it .
+
+iso17025:MethodSelection a owl:Class ;
+    rdfs:label "Selezione del Metodo"@it ;
+    rdfs:subClassOf iso17025:ReviewProcedure ;
+    skos:notation "7.1.1.d" ;
+    rdfs:comment "Siano scelti metodi o procedure appropriati"@it .
+
+iso17025:InappropriateMethodNotification a owl:Class ;
+    rdfs:label "Notifica Metodo Non Appropriato"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.2" ;
+    rdfs:comment "Informare il cliente quando il metodo richiesto è non appropriato"@it .
+
+iso17025:ConformityStatement a owl:Class ;
+    rdfs:label "Dichiarazione di Conformità"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.3" ;
+    rdfs:comment "Quando richiesta dichiarazione di conformità, definire specifica e regola decisionale"@it .
+
+iso17025:ContractDifferenceResolution a owl:Class ;
+    rdfs:label "Risoluzione Differenze Contrattuali"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.4" ;
+    rdfs:comment "Differenze tra richiesta e contratto devono essere risolte"@it .
+
+iso17025:DeviationNotification a owl:Class ;
+    rdfs:label "Notifica Scostamenti"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.5" ;
+    rdfs:comment "Il cliente deve essere informato circa ogni scostamento dal contratto"@it .
+
+iso17025:ContractAmendment a owl:Class ;
+    rdfs:label "Modifica Contratto"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.6" ;
+    rdfs:comment "Se il contratto viene modificato dopo l'avvio, ripetere il riesame"@it .
+
+iso17025:CustomerCooperation a owl:Class ;
+    rdfs:label "Cooperazione con Cliente"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.7" ;
+    rdfs:comment "Cooperare con i clienti per chiarire richieste e monitorare prestazioni"@it .
+
+iso17025:ReviewRecords a owl:Class ;
+    rdfs:label "Registrazioni del Riesame"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.8" ;
+    rdfs:comment "Le registrazioni dei riesami devono essere conservate"@it .
+
+## 7.2 Selezione, Verifica e Validazione dei Metodi
+iso17025:Method a owl:Class ;
+    rdfs:label "Metodo"@it ;
+    rdfs:label "Method"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.2" ;
+    owl:equivalentClass obi:0000272 .
+
+### 7.2.1 Selezione e Verifica dei Metodi
+iso17025:MethodSelectionVerification a owl:Class ;
+    rdfs:label "Selezione e Verifica Metodi"@it ;
+    rdfs:subClassOf iso17025:Method ;
+    skos:notation "7.2.1" .
+
+iso17025:AppropriateMethodUse a owl:Class ;
+    rdfs:label "Uso Metodi Appropriati"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.1" ;
+    rdfs:comment "Utilizzare metodi e procedure appropriati per tutte le attività"@it .
+
+iso17025:MethodDocumentationUpdate a owl:Class ;
+    rdfs:label "Aggiornamento Documentazione Metodi"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.2" ;
+    rdfs:comment "Metodi e documentazione mantenuti aggiornati e disponibili"@it .
+
+iso17025:ValidEditionUse a owl:Class ;
+    rdfs:label "Uso Edizione Valida"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.3" ;
+    rdfs:comment "Utilizzare l'ultima edizione valida dei metodi"@it .
+
+iso17025:MethodChoice a owl:Class ;
+    rdfs:label "Scelta del Metodo"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.4" ;
+    rdfs:comment "Scegliere metodo appropriato quando non specificato dal cliente"@it .
+
+iso17025:MethodCapabilityVerification a owl:Class ;
+    rdfs:label "Verifica Capacità Metodo"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.5" ;
+    rdfs:comment "Verificare di essere in grado di eseguire correttamente i metodi"@it .
+
+iso17025:MethodDevelopment a owl:Class ;
+    rdfs:label "Sviluppo del Metodo"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.6" ;
+    rdfs:comment "Lo sviluppo di metodi deve essere pianificato"@it .
+
+iso17025:MethodDeviation a owl:Class ;
+    rdfs:label "Scostamento dal Metodo"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.7" ;
+    rdfs:comment "Scostamenti solo se documentati, giustificati e accettati"@it .
+
+### 7.2.2 Validazione dei Metodi
+iso17025:MethodValidation a owl:Class ;
+    rdfs:label "Validazione dei Metodi"@it ;
+    rdfs:label "Method Validation"@en ;
+    rdfs:subClassOf iso17025:Method ;
+    skos:notation "7.2.2" .
+
+iso17025:ValidationScope a owl:Class ;
+    rdfs:label "Campo di Validazione"@it ;
+    rdfs:subClassOf iso17025:MethodValidation ;
+    skos:notation "7.2.2.1" ;
+    rdfs:comment "Validare metodi non normalizzati, sviluppati dal laboratorio o modificati"@it .
+
+iso17025:ValidationModificationImpact a owl:Class ;
+    rdfs:label "Impatto Modifiche su Validazione"@it ;
+    rdfs:subClassOf iso17025:MethodValidation ;
+    skos:notation "7.2.2.2" ;
+    rdfs:comment "Determinare influenza modifiche sulla validazione originaria"@it .
+
+iso17025:PerformanceCharacteristics a owl:Class ;
+    rdfs:label "Caratteristiche Prestazionali"@it ;
+    rdfs:subClassOf iso17025:MethodValidation ;
+    skos:notation "7.2.2.3" ;
+    rdfs:comment "Le caratteristiche prestazionali devono tener conto delle esigenze"@it .
+
+iso17025:ValidationRecords a owl:Class ;
+    rdfs:label "Registrazioni Validazione"@it ;
+    rdfs:subClassOf iso17025:MethodValidation ;
+    skos:notation "7.2.2.4" ;
+    rdfs:comment "Conservare registrazioni relative alla validazione"@it .
+
+## 7.3 Campionamento
+iso17025:Sampling a owl:Class ;
+    rdfs:label "Campionamento"@it ;
+    rdfs:label "Sampling"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.3" ;
+    owl:equivalentClass sosa:Sampling .
+
+iso17025:SamplingPlan a owl:Class ;
+    rdfs:label "Piano di Campionamento"@it ;
+    rdfs:label "Sampling Plan"@en ;
+    rdfs:subClassOf iso17025:Sampling ;
+    skos:notation "7.3.1" ;
+    rdfs:comment "Piano e metodo di campionamento basato su metodi statistici"@it .
+
+iso17025:SamplingMethod a owl:Class ;
+    rdfs:label "Metodo di Campionamento"@it ;
+    rdfs:subClassOf iso17025:Sampling ;
+    skos:notation "7.3.2" ;
+    rdfs:comment "Il metodo di campionamento deve descrivere selezione, piano e preparazione"@it .
+
+iso17025:SamplingRecord a owl:Class ;
+    rdfs:label "Registrazioni Campionamento"@it ;
+    rdfs:label "Sampling Record"@en ;
+    rdfs:subClassOf iso17025:Sampling ;
+    skos:notation "7.3.3" ;
+    rdfs:comment "Conservare registrazioni dei dati di campionamento"@it .
+
+## 7.4 Manipolazione degli Oggetti
+iso17025:ItemHandling a owl:Class ;
+    rdfs:label "Manipolazione Oggetti"@it ;
+    rdfs:label "Handling of Test or Calibration Items"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.4" .
+
+iso17025:ItemHandlingProcedure a owl:Class ;
+    rdfs:label "Procedura Manipolazione Oggetti"@it ;
+    rdfs:subClassOf iso17025:ItemHandling ;
+    skos:notation "7.4.1" ;
+    rdfs:comment "Procedura per trasporto, ricezione, manipolazione, protezione"@it .
+
+iso17025:ItemIdentification a owl:Class ;
+    rdfs:label "Identificazione Oggetti"@it ;
+    rdfs:label "Item Identification"@en ;
+    rdfs:subClassOf iso17025:ItemHandling ;
+    skos:notation "7.4.2" ;
+    rdfs:comment "Sistema per identificazione univoca degli oggetti"@it .
+
+iso17025:ItemConditionDeviation a owl:Class ;
+    rdfs:label "Scostamento Condizioni Oggetto"@it ;
+    rdfs:subClassOf iso17025:ItemHandling ;
+    skos:notation "7.4.3" ;
+    rdfs:comment "Registrare scostamenti dalle condizioni specificate"@it .
+
+iso17025:ItemStorage a owl:Class ;
+    rdfs:label "Conservazione Oggetti"@it ;
+    rdfs:subClassOf iso17025:ItemHandling ;
+    skos:notation "7.4.4" ;
+    rdfs:comment "Mantenere, monitorare e registrare condizioni di conservazione"@it .
+
+## 7.5 Registrazioni Tecniche
+iso17025:TechnicalRecord a owl:Class ;
+    rdfs:label "Registrazioni Tecniche"@it ;
+    rdfs:label "Technical Records"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.5" ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Registrazioni tecniche relative ad ogni attività di laboratorio"@it .
+
+iso17025:RecordContent a owl:Class ;
+    rdfs:label "Contenuto Registrazioni"@it ;
+    rdfs:subClassOf iso17025:TechnicalRecord ;
+    skos:notation "7.5.1" ;
+    rdfs:comment "Registrazioni devono contenere risultati, rapporti e informazioni sufficienti"@it .
+
+iso17025:RecordCorrection a owl:Class ;
+    rdfs:label "Correzione Registrazioni"@it ;
+    rdfs:subClassOf iso17025:TechnicalRecord ;
+    skos:notation "7.5.2" ;
+    rdfs:comment "Le correzioni devono essere ricollegate alle versioni precedenti"@it .
+
+## 7.6 Valutazione dell'Incertezza di Misura
+iso17025:MeasurementUncertainty a owl:Class ;
+    rdfs:label "Incertezza di Misura"@it ;
+    rdfs:label "Measurement Uncertainty"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.6" ;
+    rdfs:seeAlso omt:MeasurementUncertainty ;
+    rdfs:seeAlso qudt:Uncertainty .
+
+iso17025:UncertaintyContributions a owl:Class ;
+    rdfs:label "Contributi all'Incertezza"@it ;
+    rdfs:subClassOf iso17025:MeasurementUncertainty ;
+    skos:notation "7.6.1" ;
+    rdfs:comment "Identificare i contributi all'incertezza di misura"@it .
+
+iso17025:CalibrationUncertainty a owl:Class ;
+    rdfs:label "Incertezza nelle Tarature"@it ;
+    rdfs:subClassOf iso17025:MeasurementUncertainty ;
+    skos:notation "7.6.2" ;
+    rdfs:comment "Valutare l'incertezza di misura per tutte le tarature"@it .
+
+iso17025:TestUncertainty a owl:Class ;
+    rdfs:label "Incertezza nelle Prove"@it ;
+    rdfs:subClassOf iso17025:MeasurementUncertainty ;
+    skos:notation "7.6.3" ;
+    rdfs:comment "Valutare l'incertezza di misura nelle prove"@it .
+
+## 7.7 Assicurazione della Validità dei Risultati
+iso17025:ValidityAssurance a owl:Class ;
+    rdfs:label "Assicurazione Validità Risultati"@it ;
+    rdfs:label "Ensuring the Validity of Results"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.7" .
+
+iso17025:InternalQualityControl a owl:Class ;
+    rdfs:label "Controllo Qualità Interno"@it ;
+    rdfs:subClassOf iso17025:ValidityAssurance ;
+    skos:notation "7.7.1" ;
+    rdfs:comment "Procedura per monitorare la validità dei risultati"@it .
+
+iso17025:QCMaterials a owl:Class ;
+    rdfs:label "Materiali Controllo Qualità"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.a" ;
+    rdfs:comment "Utilizzo di materiali di riferimento o materiali di controllo qualità"@it .
+
+iso17025:AlternativeInstrumentation a owl:Class ;
+    rdfs:label "Strumentazione Alternativa"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.b" ;
+    rdfs:comment "Utilizzo di strumentazione alternativa tarata"@it .
+
+iso17025:FunctionalChecks a owl:Class ;
+    rdfs:label "Verifiche Funzionali"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.c" ;
+    rdfs:comment "Verifiche funzionali delle apparecchiature"@it .
+
+iso17025:ControlCharts a owl:Class ;
+    rdfs:label "Carte di Controllo"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.d" ;
+    rdfs:comment "Utilizzo di carte di controllo"@it .
+
+iso17025:RetestingRetaratura a owl:Class ;
+    rdfs:label "Ripetizione Prove/Tarature"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.f" ;
+    rdfs:comment "Ripetizione di prove o tarature"@it .
+
+iso17025:InterlaboratoryMonitoring a owl:Class ;
+    rdfs:label "Monitoraggio Interlaboratorio"@it ;
+    rdfs:subClassOf iso17025:ValidityAssurance ;
+    skos:notation "7.7.2" ;
+    rdfs:comment "Monitorare prestazioni mediante confronto con altri laboratori"@it .
+
+iso17025:ProficiencyTestingParticipation a owl:Class ;
+    rdfs:label "Partecipazione Prove Valutative"@it ;
+    rdfs:subClassOf iso17025:InterlaboratoryMonitoring ;
+    skos:notation "7.7.2.a" ;
+    rdfs:comment "Partecipazione a prove valutative interlaboratorio"@it .
+
+iso17025:DataAnalysisAndControl a owl:Class ;
+    rdfs:label "Analisi e Controllo Dati"@it ;
+    rdfs:subClassOf iso17025:ValidityAssurance ;
+    skos:notation "7.7.3" ;
+    rdfs:comment "I dati del monitoraggio devono essere analizzati e utilizzati"@it .
+
+## 7.8 Presentazione dei Risultati
+iso17025:Report a owl:Class ;
+    rdfs:label "Rapporto"@it ;
+    rdfs:label "Report"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.8" .
+
+### 7.8.1 Generalità
+iso17025:ReportGeneral a owl:Class ;
+    rdfs:label "Rapporti - Generalità"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.1" .
+
+iso17025:ResultReview a owl:Class ;
+    rdfs:label "Riesame Risultati"@it ;
+    rdfs:subClassOf iso17025:ReportGeneral ;
+    skos:notation "7.8.1.1" ;
+    rdfs:comment "I risultati devono essere riesaminati e approvati prima di essere emessi"@it .
+
+iso17025:ReportClarity a owl:Class ;
+    rdfs:label "Chiarezza Rapporti"@it ;
+    rdfs:subClassOf iso17025:ReportGeneral ;
+    skos:notation "7.8.1.2" ;
+    rdfs:comment "I risultati devono essere forniti in modo accurato, chiaro, univoco e oggettivo"@it .
+
+iso17025:SimplifiedReporting a owl:Class ;
+    rdfs:label "Presentazione Semplificata"@it ;
+    rdfs:subClassOf iso17025:ReportGeneral ;
+    skos:notation "7.8.1.3" ;
+    rdfs:comment "Quando concordato, i risultati possono essere presentati in modo semplificato"@it .
+
+### 7.8.2 Requisiti Comuni per i Rapporti
+iso17025:CommonReportRequirements a owl:Class ;
+    rdfs:label "Requisiti Comuni Rapporti"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.2" .
+
+iso17025:ReportContent a owl:Class ;
+    rdfs:label "Contenuto del Rapporto"@it ;
+    rdfs:subClassOf iso17025:CommonReportRequirements ;
+    skos:notation "7.8.2.1" ;
+    rdfs:comment "Ogni rapporto deve comprendere informazioni minime"@it .
+
+iso17025:ClientDataResponsibility a owl:Class ;
+    rdfs:label "Responsabilità Dati Cliente"@it ;
+    rdfs:subClassOf iso17025:CommonReportRequirements ;
+    skos:notation "7.8.2.2" ;
+    rdfs:comment "Dati forniti dal cliente devono essere chiaramente identificati"@it .
+
+### 7.8.3 Requisiti Specifici per Rapporti di Prova
+iso17025:TestReport a owl:Class ;
+    rdfs:label "Rapporto di Prova"@it ;
+    rdfs:label "Test Report"@en ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.3" .
+
+iso17025:TestReportContent a owl:Class ;
+    rdfs:label "Contenuto Rapporto di Prova"@it ;
+    rdfs:subClassOf iso17025:TestReport ;
+    skos:notation "7.8.3.1" ;
+    rdfs:comment "Requisiti aggiuntivi per rapporti di prova"@it .
+
+iso17025:TestReportSampling a owl:Class ;
+    rdfs:label "Campionamento in Rapporto di Prova"@it ;
+    rdfs:subClassOf iso17025:TestReport ;
+    skos:notation "7.8.3.2" ;
+    rdfs:comment "Conformità ai requisiti di campionamento"@it .
+
+### 7.8.4 Requisiti Specifici per Certificati di Taratura
+iso17025:CalibrationCertificate a owl:Class ;
+    rdfs:label "Certificato di Taratura"@it ;
+    rdfs:label "Calibration Certificate"@en ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.4" .
+
+iso17025:CalibrationCertificateContent a owl:Class ;
+    rdfs:label "Contenuto Certificato di Taratura"@it ;
+    rdfs:subClassOf iso17025:CalibrationCertificate ;
+    skos:notation "7.8.4.1" ;
+    rdfs:comment "Requisiti aggiuntivi per certificati di taratura"@it .
+
+iso17025:CalibrationInterval a owl:Class ;
+    rdfs:label "Intervallo di Taratura"@it ;
+    rdfs:subClassOf iso17025:CalibrationCertificate ;
+    skos:notation "7.8.4.3" ;
+    rdfs:comment "Non deve contenere raccomandazioni su intervallo se non concordato"@it .
+
+### 7.8.5 Presentazione Informazioni Campionamento
+iso17025:SamplingReport a owl:Class ;
+    rdfs:label "Rapporto Campionamento"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.5" ;
+    rdfs:comment "Informazioni relative al campionamento"@it .
+
+### 7.8.6 Dichiarazioni di Conformità
+iso17025:StatementOfConformity a owl:Class ;
+    rdfs:label "Dichiarazione di Conformità"@it ;
+    rdfs:label "Statement of Conformity"@en ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.6" .
+
+iso17025:DecisionRuleDocumentation a owl:Class ;
+    rdfs:label "Documentazione Regola Decisionale"@it ;
+    rdfs:subClassOf iso17025:StatementOfConformity ;
+    skos:notation "7.8.6.1" ;
+    rdfs:comment "Documentare la regola decisionale utilizzata"@it .
+
+iso17025:ConformityReporting a owl:Class ;
+    rdfs:label "Presentazione Conformità"@it ;
+    rdfs:subClassOf iso17025:StatementOfConformity ;
+    skos:notation "7.8.6.2" ;
+    rdfs:comment "Riportare dichiarazione identificando chiaramente applicabilità"@it .
+
+### 7.8.7 Opinioni e Interpretazioni
+iso17025:OpinionsInterpretations a owl:Class ;
+    rdfs:label "Opinioni e Interpretazioni"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.7" .
+
+iso17025:OpinionAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Opinioni"@it ;
+    rdfs:subClassOf iso17025:OpinionsInterpretations ;
+    skos:notation "7.8.7.1" ;
+    rdfs:comment "Solo personale autorizzato può rilasciare opinioni"@it .
+
+iso17025:OpinionBasis a owl:Class ;
+    rdfs:label "Base delle Opinioni"@it ;
+    rdfs:subClassOf iso17025:OpinionsInterpretations ;
+    skos:notation "7.8.7.2" ;
+    rdfs:comment "Opinioni basate sui risultati ottenuti"@it .
+
+iso17025:VerbalOpinions a owl:Class ;
+    rdfs:label "Opinioni Verbali"@it ;
+    rdfs:subClassOf iso17025:OpinionsInterpretations ;
+    skos:notation "7.8.7.3" ;
+    rdfs:comment "Conservare registrazione di comunicazioni verbali"@it .
+
+### 7.8.8 Correzioni dei Rapporti
+iso17025:ReportCorrection a owl:Class ;
+    rdfs:label "Correzioni Rapporti"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.8" .
+
+iso17025:ModificationIdentification a owl:Class ;
+    rdfs:label "Identificazione Modifiche"@it ;
+    rdfs:subClassOf iso17025:ReportCorrection ;
+    skos:notation "7.8.8.1" ;
+    rdfs:comment "Ogni informazione modificata deve essere chiaramente identificata"@it .
+
+iso17025:CorrectionDocument a owl:Class ;
+    rdfs:label "Documento di Correzione"@it ;
+    rdfs:subClassOf iso17025:ReportCorrection ;
+    skos:notation "7.8.8.2" ;
+    rdfs:comment "Correzioni tramite ulteriore documento"@it .
+
+iso17025:CompleteReissue a owl:Class ;
+    rdfs:label "Riemissione Completa"@it ;
+    rdfs:subClassOf iso17025:ReportCorrection ;
+    skos:notation "7.8.8.3" ;
+    rdfs:comment "Rapporto completamente nuovo con riferimento all'originale"@it .
+
+## 7.9 Reclami
+iso17025:ComplaintProcess a owl:Class ;
+    rdfs:label "Processo Reclami"@it ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.9" .
+
+iso17025:ComplaintProcedure a owl:Class ;
+    rdfs:label "Procedura Reclami"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.1" ;
+    rdfs:comment "Processo documentato per ricevere, valutare e decidere sui reclami"@it .
+
+iso17025:ComplaintDescription a owl:Class ;
+    rdfs:label "Descrizione Processo Reclami"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.2" ;
+    rdfs:comment "Descrizione disponibile del processo di trattamento"@it .
+
+iso17025:ComplaintElements a owl:Class ;
+    rdfs:label "Elementi Processo Reclami"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.3" ;
+    rdfs:comment "Elementi minimi del processo di trattamento"@it .
+
+iso17025:ComplaintValidation a owl:Class ;
+    rdfs:label "Validazione Reclamo"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.4" ;
+    rdfs:comment "Raccolta e verifica informazioni per validazione"@it .
+
+iso17025:ComplaintAcknowledgment a owl:Class ;
+    rdfs:label "Conferma Reclamo"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.5" ;
+    rdfs:comment "Confermare ricezione e fornire aggiornamenti"@it .
+
+iso17025:ComplaintOutcome a owl:Class ;
+    rdfs:label "Esito Reclamo"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.6" ;
+    rdfs:comment "Esiti assunti da persone non coinvolte nell'attività originaria"@it .
+
+iso17025:ComplaintClosure a owl:Class ;
+    rdfs:label "Chiusura Reclamo"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.7" ;
+    rdfs:comment "Comunicazione formale della conclusione"@it .
+
+## 7.10 Attività Non Conformi
+iso17025:NonconformingWork a owl:Class ;
+    rdfs:label "Attività Non Conformi"@it ;
+    rdfs:label "Nonconforming Work"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.10" .
+
+iso17025:NonconformityProcedure a owl:Class ;
+    rdfs:label "Procedura Non Conformità"@it ;
+    rdfs:subClassOf iso17025:NonconformingWork ;
+    skos:notation "7.10.1" ;
+    rdfs:comment "Procedura per gestione attività non conformi"@it .
+
+iso17025:NonconformityResponsibility a owl:Class ;
+    rdfs:label "Responsabilità Non Conformità"@it ;
+    rdfs:subClassOf iso17025:NonconformityProcedure ;
+    skos:notation "7.10.1.a" ;
+    rdfs:comment "Definire responsabilità e autorità per la gestione"@it .
+
+iso17025:RiskBasedActions a owl:Class ;
+    rdfs:label "Azioni Basate sul Rischio"@it ;
+    rdfs:subClassOf iso17025:NonconformityProcedure ;
+    skos:notation "7.10.1.b" ;
+    rdfs:comment "Azioni basate sui livelli di rischio stabiliti"@it .
+
+iso17025:NonconformityEvaluation a owl:Class ;
+    rdfs:label "Valutazione Non Conformità"@it ;
+    rdfs:subClassOf iso17025:NonconformityProcedure ;
+    skos:notation "7.10.1.c" ;
+    rdfs:comment "Valutazione della significatività e impatto"@it .
+
+iso17025:NonconformityRecords a owl:Class ;
+    rdfs:label "Registrazioni Non Conformità"@it ;
+    rdfs:subClassOf iso17025:NonconformingWork ;
+    skos:notation "7.10.2" ;
+    rdfs:comment "Conservare registrazioni sulle attività non conformi"@it .
+
+iso17025:RecurrenceEvaluation a owl:Class ;
+    rdfs:label "Valutazione Ricorrenza"@it ;
+    rdfs:subClassOf iso17025:NonconformingWork ;
+    skos:notation "7.10.3" ;
+    rdfs:comment "Valutare se potrebbero ripetersi e attuare azioni correttive"@it .
+
+## 7.11 Controllo dei Dati e Gestione delle Informazioni
+iso17025:DataControl a owl:Class ;
+    rdfs:label "Controllo Dati"@it ;
+    rdfs:label "Control of Data and Information Management"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.11" .
+
+iso17025:DataAvailability a owl:Class ;
+    rdfs:label "Disponibilità Dati"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.1" ;
+    rdfs:comment "Disporre di tutti i dati e informazioni necessari"@it .
+
+iso17025:InformationSystemValidation a owl:Class ;
+    rdfs:label "Validazione Sistemi Informativi"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.2" ;
+    rdfs:comment "Sistemi di gestione informazioni devono essere validati"@it .
+
+iso17025:SystemProtection a owl:Class ;
+    rdfs:label "Protezione Sistemi"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.3" ;
+    rdfs:comment "I sistemi devono essere protetti"@it .
+
+iso17025:UnauthorizedAccessProtection a owl:Class ;
+    rdfs:label "Protezione Accessi Non Autorizzati"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.a" .
+
+iso17025:DataIntegrity a owl:Class ;
+    rdfs:label "Integrità Dati"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.b" .
+
+iso17025:OperatingEnvironment a owl:Class ;
+    rdfs:label "Ambiente Operativo"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.c" .
+
+iso17025:SystemMaintenance a owl:Class ;
+    rdfs:label "Manutenzione Sistemi"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.d" .
+
+iso17025:SystemFailureRecording a owl:Class ;
+    rdfs:label "Registrazione Guasti Sistema"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.e" .
+
+iso17025:OffSiteManagement a owl:Class ;
+    rdfs:label "Gestione Fuori Sede"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.4" ;
+    rdfs:comment "Gestione sistemi fuori sede o con fornitori esterni"@it .
+
+iso17025:InstructionAccess a owl:Class ;
+    rdfs:label "Accesso Istruzioni"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.5" ;
+    rdfs:comment "Istruzioni e manuali prontamente accessibili"@it .
+
+iso17025:CalculationVerification a owl:Class ;
+    rdfs:label "Verifica Calcoli"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.6" ;
+    rdfs:comment "Calcoli e trasferimenti dati verificati sistematicamente"@it .
+
+# ============================================================================
+# CLAUSOLA 8: REQUISITI DEL SISTEMA DI GESTIONE - ESPANSIONE COMPLETA
+# ============================================================================
+
+iso17025:Clause8_ManagementSystemRequirements a owl:Class ;
+    rdfs:label "Clausola 8 - Requisiti del Sistema di Gestione"@it ;
+    rdfs:label "Clause 8 - Management System Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti del sistema di gestione (Opzione A o Opzione B)"@it .
+
+## 8.1 Opzioni
+iso17025:ManagementSystemOptions a owl:Class ;
+    rdfs:label "Opzioni Sistema di Gestione"@it ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.1" .
+
+iso17025:GeneralManagementSystem a owl:Class ;
+    rdfs:label "Sistema di Gestione Generale"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemOptions ;
+    skos:notation "8.1.1" ;
+    rdfs:comment "Stabilire, documentare, attuare e mantenere un sistema di gestione"@it .
+
+iso17025:ManagementSystemOptionA a owl:Class ;
+    rdfs:label "Opzione A Sistema di Gestione"@it ;
+    rdfs:label "Management System Option A"@en ;
+    rdfs:subClassOf iso17025:ManagementSystemOptions ;
+    skos:notation "8.1.2" ;
+    rdfs:comment "Requisiti minimi per il sistema di gestione"@it .
+
+iso17025:ManagementSystemOptionB a owl:Class ;
+    rdfs:label "Opzione B Sistema di Gestione"@it ;
+    rdfs:label "Management System Option B"@en ;
+    rdfs:subClassOf iso17025:ManagementSystemOptions ;
+    skos:notation "8.1.3" ;
+    rdfs:comment "Sistema di gestione conforme ai requisiti della ISO 9001"@it .
+
+## 8.2 Documentazione del Sistema di Gestione (Opzione A)
+iso17025:ManagementSystemDocumentation a owl:Class ;
+    rdfs:label "Documentazione Sistema di Gestione"@it ;
+    rdfs:label "Management System Documentation"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.2" .
+
+iso17025:PoliciesAndObjectives a owl:Class ;
+    rdfs:label "Politiche e Obiettivi"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.1" ;
+    rdfs:comment "Stabilire, documentare e mantenere politiche e obiettivi"@it .
+
+iso17025:CompetenceImparzialityOperation a owl:Class ;
+    rdfs:label "Competenza Imparzialità Funzionamento"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.2" ;
+    rdfs:comment "Politiche e obiettivi devono riguardare competenza, imparzialità e funzionamento"@it .
+
+iso17025:ManagementCommitment a owl:Class ;
+    rdfs:label "Impegno della Direzione"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.3" ;
+    rdfs:comment "Evidenza dell'impegno relativo allo sviluppo e attuazione"@it .
+
+iso17025:SystemDocumentationScope a owl:Class ;
+    rdfs:label "Campo Documentazione Sistema"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.4" ;
+    rdfs:comment "Sistema deve comprendere tutti i documenti e processi"@it .
+
+iso17025:DocumentationAccess a owl:Class ;
+    rdfs:label "Accesso Documentazione"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.5" ;
+    rdfs:comment "Personale deve avere accesso alla documentazione applicabile"@it .
+
+## 8.3 Controllo dei Documenti del Sistema di Gestione (Opzione A)
+iso17025:DocumentControl a owl:Class ;
+    rdfs:label "Controllo Documenti"@it ;
+    rdfs:label "Control of Management System Documents"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.3" .
+
+iso17025:DocumentTypes a owl:Class ;
+    rdfs:label "Tipi di Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.1" ;
+    rdfs:comment "Controllo documenti interni ed esterni"@it .
+
+iso17025:DocumentApproval a owl:Class ;
+    rdfs:label "Approvazione Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.a" ;
+    rdfs:comment "Documenti approvati per adeguatezza prima dell'emissione"@it .
+
+iso17025:DocumentReview a owl:Class ;
+    rdfs:label "Riesame Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.b" ;
+    rdfs:comment "Documenti periodicamente riesaminati e aggiornati"@it .
+
+iso17025:DocumentChanges a owl:Class ;
+    rdfs:label "Modifiche Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.c" ;
+    rdfs:comment "Identificare modifiche e stato di revisione corrente"@it .
+
+iso17025:DocumentAvailability a owl:Class ;
+    rdfs:label "Disponibilità Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.d" ;
+    rdfs:comment "Versioni pertinenti disponibili nei punti di utilizzo"@it .
+
+iso17025:DocumentIdentification a owl:Class ;
+    rdfs:label "Identificazione Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.e" ;
+    rdfs:comment "Documenti identificati in modo univoco"@it .
+
+iso17025:ObsoleteDocumentControl a owl:Class ;
+    rdfs:label "Controllo Documenti Obsoleti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.f" ;
+    rdfs:comment "Impedito utilizzo non intenzionale di documenti obsoleti"@it .
+
+## 8.4 Controllo delle Registrazioni (Opzione A)
+iso17025:RecordControl a owl:Class ;
+    rdfs:label "Controllo Registrazioni"@it ;
+    rdfs:label "Control of Records"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.4" .
+
+iso17025:RecordProduction a owl:Class ;
+    rdfs:label "Produzione Registrazioni"@it ;
+    rdfs:subClassOf iso17025:RecordControl ;
+    skos:notation "8.4.1" ;
+    rdfs:comment "Produrre e conservare registrazioni leggibili"@it .
+
+iso17025:RecordManagement a owl:Class ;
+    rdfs:label "Gestione Registrazioni"@it ;
+    rdfs:subClassOf iso17025:RecordControl ;
+    skos:notation "8.4.2" ;
+    rdfs:comment "Controllo identificazione, conservazione, protezione, back-up"@it .
+
+iso17025:RecordRetention a owl:Class ;
+    rdfs:label "Conservazione Registrazioni"@it ;
+    rdfs:subClassOf iso17025:RecordManagement ;
+    rdfs:comment "Tempo di conservazione coerente con obblighi contrattuali"@it .
+
+iso17025:RecordAccessibility a owl:Class ;
+    rdfs:label "Accessibilità Registrazioni"@it ;
+    rdfs:subClassOf iso17025:RecordManagement ;
+    rdfs:comment "Registrazioni prontamente disponibili"@it .
+
+## 8.5 Azioni per Affrontare Rischi e Opportunità (Opzione A)
+iso17025:RiskManagement a owl:Class ;
+    rdfs:label "Gestione Rischi e Opportunità"@it ;
+    rdfs:label "Actions to Address Risks and Opportunities"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.5" .
+
+iso17025:RiskConsideration a owl:Class ;
+    rdfs:label "Considerazione Rischi"@it ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    skos:notation "8.5.1" ;
+    rdfs:comment "Prendere in considerazione rischi e opportunità"@it .
+
+iso17025:EnsureIntendedResults a owl:Class ;
+    rdfs:label "Assicurare Risultati Previsti"@it ;
+    rdfs:subClassOf iso17025:RiskConsideration ;
+    skos:notation "8.5.1.a" .
+
+iso17025:EnhanceOpportunities a owl:Class ;
+    rdfs:label "Accrescere Opportunità"@it ;
+    rdfs:subClassOf iso17025:RiskConsideration ;
+    skos:notation "8.5.1.b" .
+
+iso17025:PreventUndesiredImpacts a owl:Class ;
+    rdfs:label "Prevenire Impatti Indesiderati"@it ;
+    rdfs:subClassOf iso17025:RiskConsideration ;
+    skos:notation "8.5.1.c" .
+
+iso17025:AchieveImprovement a owl:Class ;
+    rdfs:label "Conseguire Miglioramento"@it ;
+    rdfs:subClassOf iso17025:RiskConsideration ;
+    skos:notation "8.5.1.d" .
+
+iso17025:RiskActionPlanning a owl:Class ;
+    rdfs:label "Pianificazione Azioni Rischio"@it ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    skos:notation "8.5.2" ;
+    rdfs:comment "Pianificare azioni per affrontare rischi e opportunità"@it .
+
+iso17025:RiskActionProportionality a owl:Class ;
+    rdfs:label "Proporzionalità Azioni Rischio"@it ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    skos:notation "8.5.3" ;
+    rdfs:comment "Azioni proporzionate ai potenziali impatti"@it .
+
+iso17025:Risk a owl:Class ;
+    rdfs:label "Rischio"@it ;
+    rdfs:label "Risk"@en ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    rdfs:comment "Rischio identificato per le attività del laboratorio"@it .
+
+iso17025:Opportunity a owl:Class ;
+    rdfs:label "Opportunità"@it ;
+    rdfs:label "Opportunity"@en ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    rdfs:comment "Opportunità identificata per il miglioramento"@it .
+
+## 8.6 Miglioramento (Opzione A)
+iso17025:Improvement a owl:Class ;
+    rdfs:label "Miglioramento"@it ;
+    rdfs:label "Improvement"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.6" .
+
+iso17025:ImprovementOpportunityIdentification a owl:Class ;
+    rdfs:label "Identificazione Opportunità Miglioramento"@it ;
+    rdfs:subClassOf iso17025:Improvement ;
+    skos:notation "8.6.1" ;
+    rdfs:comment "Identificare e selezionare opportunità di miglioramento"@it .
+
+iso17025:CustomerFeedback a owl:Class ;
+    rdfs:label "Feedback Cliente"@it ;
+    rdfs:subClassOf iso17025:Improvement ;
+    skos:notation "8.6.2" ;
+    rdfs:comment "Cercare informazioni di ritorno dai clienti"@it .
+
+iso17025:FeedbackAnalysis a owl:Class ;
+    rdfs:label "Analisi Feedback"@it ;
+    rdfs:subClassOf iso17025:CustomerFeedback ;
+    rdfs:comment "Analizzare e utilizzare feedback per migliorare"@it .
+
+## 8.7 Azioni Correttive (Opzione A)
+iso17025:CorrectiveAction a owl:Class ;
+    rdfs:label "Azioni Correttive"@it ;
+    rdfs:label "Corrective Actions"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.7" .
+
+iso17025:NonconformityReaction a owl:Class ;
+    rdfs:label "Reazione a Non Conformità"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.a" ;
+    rdfs:comment "Reagire alla non conformità e affrontarne le conseguenze"@it .
+
+iso17025:CauseEvaluation a owl:Class ;
+    rdfs:label "Valutazione Cause"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.b" ;
+    rdfs:comment "Valutare esigenza di azioni per eliminare le cause"@it .
+
+iso17025:RootCauseAnalysis a owl:Class ;
+    rdfs:label "Analisi Causa Radice"@it ;
+    rdfs:label "Root Cause Analysis"@en ;
+    rdfs:subClassOf iso17025:CauseEvaluation ;
+    rdfs:comment "Determinare le cause della non conformità"@it .
+
+iso17025:ActionImplementation a owl:Class ;
+    rdfs:label "Attuazione Azioni"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.c" ;
+    rdfs:comment "Attuare ogni azione necessaria"@it .
+
+iso17025:EffectivenessReview a owl:Class ;
+    rdfs:label "Riesame Efficacia"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.d" ;
+    rdfs:comment "Riesaminare l'efficacia di ogni azione correttiva"@it .
+
+iso17025:RiskUpdate a owl:Class ;
+    rdfs:label "Aggiornamento Rischi"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.e" ;
+    rdfs:comment "Aggiornare rischi e opportunità se necessario"@it .
+
+iso17025:SystemModification a owl:Class ;
+    rdfs:label "Modifica Sistema"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.f" ;
+    rdfs:comment "Effettuare modifiche al sistema di gestione se necessario"@it .
+
+iso17025:ActionProportionality a owl:Class ;
+    rdfs:label "Proporzionalità Azioni"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.2" ;
+    rdfs:comment "Azioni correttive adeguate agli effetti delle non conformità"@it .
+
+iso17025:CorrectiveActionRecords a owl:Class ;
+    rdfs:label "Registrazioni Azioni Correttive"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.3" ;
+    rdfs:comment "Conservare registrazioni delle non conformità e azioni"@it .
+
+## 8.8 Audit Interni (Opzione A)
+iso17025:InternalAudit a owl:Class ;
+    rdfs:label "Audit Interni"@it ;
+    rdfs:label "Internal Audits"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.8" .
+
+iso17025:AuditPurpose a owl:Class ;
+    rdfs:label "Scopo Audit"@it ;
+    rdfs:subClassOf iso17025:InternalAudit ;
+    skos:notation "8.8.1" ;
+    rdfs:comment "Condurre audit interni a intervalli pianificati"@it .
+
+iso17025:AuditConformity a owl:Class ;
+    rdfs:label "Conformità Audit"@it ;
+    rdfs:subClassOf iso17025:AuditPurpose ;
+    skos:notation "8.8.1.a" ;
+    rdfs:comment "Verificare conformità ai requisiti"@it .
+
+iso17025:AuditImplementation a owl:Class ;
+    rdfs:label "Attuazione Audit"@it ;
+    rdfs:subClassOf iso17025:AuditPurpose ;
+    skos:notation "8.8.1.b" ;
+    rdfs:comment "Verificare efficace attuazione e mantenimento"@it .
+
+iso17025:AuditProgram a owl:Class ;
+    rdfs:label "Programma di Audit"@it ;
+    rdfs:label "Audit Program"@en ;
+    rdfs:subClassOf iso17025:InternalAudit ;
+    skos:notation "8.8.2" .
+
+iso17025:AuditPlanning a owl:Class ;
+    rdfs:label "Pianificazione Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.a" ;
+    rdfs:comment "Pianificare programma comprensivo di frequenza e metodi"@it .
+
+iso17025:AuditCriteria a owl:Class ;
+    rdfs:label "Criteri Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.b" ;
+    rdfs:comment "Definire criteri e campo di applicazione per ciascun audit"@it .
+
+iso17025:AuditReporting a owl:Class ;
+    rdfs:label "Reporting Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.c" ;
+    rdfs:comment "Risultati riportati al pertinente livello direzionale"@it .
+
+iso17025:AuditCorrections a owl:Class ;
+    rdfs:label "Correzioni da Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.d" ;
+    rdfs:comment "Attuare correzioni e azioni correttive appropriate"@it .
+
+iso17025:AuditRecords a owl:Class ;
+    rdfs:label "Registrazioni Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.e" ;
+    rdfs:comment "Conservare registrazioni del programma e risultati audit"@it .
+
+## 8.9 Riesami di Direzione (Opzione A)
+iso17025:ManagementReview a owl:Class ;
+    rdfs:label "Riesami di Direzione"@it ;
+    rdfs:label "Management Reviews"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.9" .
+
+iso17025:ReviewPurpose a owl:Class ;
+    rdfs:label "Scopo del Riesame"@it ;
+    rdfs:subClassOf iso17025:ManagementReview ;
+    skos:notation "8.9.1" ;
+    rdfs:comment "Riesaminare sistema per assicurarne idoneità, adeguatezza ed efficacia"@it .
+
+iso17025:ManagementReviewInput a owl:Class ;
+    rdfs:label "Input Riesame Direzione"@it ;
+    rdfs:label "Management Review Input"@en ;
+    rdfs:subClassOf iso17025:ManagementReview ;
+    skos:notation "8.9.2" ;
+    rdfs:comment "Gli input al riesame devono essere registrati"@it .
+
+iso17025:InternalExternalChanges a owl:Class ;
+    rdfs:label "Cambiamenti Interni ed Esterni"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.a" .
+
+iso17025:ObjectiveAchievement a owl:Class ;
+    rdfs:label "Raggiungimento Obiettivi"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.b" .
+
+iso17025:PolicyProcedureSuitability a owl:Class ;
+    rdfs:label "Idoneità Politiche e Procedure"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.c" .
+
+iso17025:PreviousActionStatus a owl:Class ;
+    rdfs:label "Stato Azioni Precedenti"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.d" .
+
+iso17025:RecentAudits a owl:Class ;
+    rdfs:label "Audit Recenti"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.e" .
+
+iso17025:ExternalEvaluations a owl:Class ;
+    rdfs:label "Valutazioni Esterne"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.g" .
+
+iso17025:WorkVolumeChanges a owl:Class ;
+    rdfs:label "Variazioni Volume Lavoro"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.h" .
+
+iso17025:CustomerPersonnelFeedback a owl:Class ;
+    rdfs:label "Feedback Cliente e Personale"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.i" .
+
+iso17025:ComplaintInput a owl:Class ;
+    rdfs:label "Reclami"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.j" .
+
+iso17025:ImprovementEffectiveness a owl:Class ;
+    rdfs:label "Efficacia Miglioramenti"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.k" .
+
+iso17025:ResourceAdequacy a owl:Class ;
+    rdfs:label "Adeguatezza Risorse"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.l" .
+
+iso17025:RiskIdentificationResults a owl:Class ;
+    rdfs:label "Risultati Identificazione Rischi"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.m" .
+
+iso17025:ValidityAssuranceOutcomes a owl:Class ;
+    rdfs:label "Esiti Assicurazione Validità"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.n" .
+
+iso17025:OtherRelevantFactors a owl:Class ;
+    rdfs:label "Altri Fattori Rilevanti"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.o" .
+
+iso17025:ManagementReviewOutput a owl:Class ;
+    rdfs:label "Output Riesame Direzione"@it ;
+    rdfs:label "Management Review Output"@en ;
+    rdfs:subClassOf iso17025:ManagementReview ;
+    skos:notation "8.9.3" ;
+    rdfs:comment "Gli output del riesame devono comprendere decisioni e azioni"@it .
+
+iso17025:SystemEffectivenessOutput a owl:Class ;
+    rdfs:label "Efficacia Sistema"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewOutput ;
+    skos:notation "8.9.3.a" .
+
+iso17025:ActivityImprovement a owl:Class ;
+    rdfs:label "Miglioramento Attività"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewOutput ;
+    skos:notation "8.9.3.b" .
+
+iso17025:ResourceProvision a owl:Class ;
+    rdfs:label "Messa a Disposizione Risorse"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewOutput ;
+    skos:notation "8.9.3.c" .
+
+iso17025:ChangeNeed a owl:Class ;
+    rdfs:label "Esigenza di Modifica"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewOutput ;
+    skos:notation "8.9.3.d" .
+
+# ============================================================================
+# APPENDICE A: RIFERIBILITÀ METROLOGICA - DETTAGLIO COMPLETO
+# ============================================================================
+
+iso17025:AppendixA_MetrologicalTraceability a owl:Class ;
+    rdfs:label "Appendice A - Riferibilità Metrologica"@it ;
+    rdfs:label "Annex A - Metrological Traceability"@en ;
+    rdfs:subClassOf iso17025:ISO17025Standard ;
+    rdfs:comment "Appendice informativa sulla riferibilità metrologica"@it .
+
+## A.2 Stabilire la Riferibilità Metrologica
+iso17025:EstablishingTraceability a owl:Class ;
+    rdfs:label "Stabilire Riferibilità Metrologica"@it ;
+    rdfs:subClassOf iso17025:AppendixA_MetrologicalTraceability ;
+    skos:notation "A.2" .
+
+iso17025:MeasurandSpecification a owl:Class ;
+    rdfs:label "Specifica del Misurando"@it ;
+    rdfs:subClassOf iso17025:EstablishingTraceability ;
+    skos:notation "A.2.1.a" ;
+    rdfs:comment "La specifica del misurando (la grandezza da misurare)"@it .
+
+iso17025:UnbrokenCalibrationChain a owl:Class ;
+    rdfs:label "Catena Ininterrotta di Tarature"@it ;
+    rdfs:subClassOf iso17025:EstablishingTraceability ;
+    skos:notation "A.2.1.b" ;
+    rdfs:comment "Catena documentata e ininterrotta di tarature fino ai campioni stabiliti"@it .
+
+iso17025:UncertaintyEvaluation a owl:Class ;
+    rdfs:label "Valutazione Incertezza"@it ;
+    rdfs:subClassOf iso17025:EstablishingTraceability ;
+    skos:notation "A.2.1.c" ;
+    rdfs:comment "Incertezza di misura per ciascun passo valutata secondo metodi concordati"@it .
+
+iso17025:StepExecution a owl:Class ;
+    rdfs:label "Esecuzione Passi"@it ;
+    rdfs:subClassOf iso17025:EstablishingTraceability ;
+    skos:notation "A.2.1.d" ;
+    rdfs:comment "Ciascun passo eseguito con metodi appropriati e risultati registrati"@it .
+
+iso17025:TechnicalCompetenceEvidence a owl:Class ;
+    rdfs:label "Evidenza Competenza Tecnica"@it ;
+    rdfs:subClassOf iso17025:EstablishingTraceability ;
+    skos:notation "A.2.1.e" ;
+    rdfs:comment "Laboratori forniscono evidenza della loro competenza tecnica"@it .
+
+iso17025:SystematicError a owl:Class ;
+    rdfs:label "Errore Sistematico"@it ;
+    rdfs:subClassOf iso17025:EstablishingTraceability ;
+    skos:notation "A.2.2" ;
+    rdfs:comment "Errore di misura sistematico (bias) considerato nella disseminazione"@it .
+
+iso17025:ConformityDeclaration a owl:Class ;
+    rdfs:label "Dichiarazione di Conformità"@it ;
+    rdfs:subClassOf iso17025:EstablishingTraceability ;
+    skos:notation "A.2.3" ;
+    rdfs:comment "Campioni con dichiarazione di conformità a specifica"@it .
+
+## A.3 Dimostrare la Riferibilità Metrologica
+iso17025:DemonstratingTraceability a owl:Class ;
+    rdfs:label "Dimostrare Riferibilità Metrologica"@it ;
+    rdfs:subClassOf iso17025:AppendixA_MetrologicalTraceability ;
+    skos:notation "A.3" .
+
+iso17025:InternationallyAcceptedPaths a owl:Class ;
+    rdfs:label "Percorsi Accettati Internazionalmente"@it ;
+    rdfs:subClassOf iso17025:DemonstratingTraceability ;
+    skos:notation "A.3.1" ;
+    rdfs:comment "Percorsi accettati a livello internazionale per dimostrare riferibilità"@it .
+
+iso17025:NMICalibrations a owl:Class ;
+    rdfs:label "Tarature da NMI"@it ;
+    rdfs:subClassOf iso17025:InternationallyAcceptedPaths ;
+    skos:notation "A.3.1.a" ;
+    rdfs:comment "Tarature fornite da Istituti nazionali di metrologia"@it .
+
+iso17025:AccreditedCalibrations a owl:Class ;
+    rdfs:label "Tarature Accreditate"@it ;
+    rdfs:subClassOf iso17025:InternationallyAcceptedPaths ;
+    skos:notation "A.3.1.b" ;
+    rdfs:comment "Tarature accreditate da organismo di accreditamento firmatario ILAC"@it .
+
+iso17025:JointDeclaration a owl:Class ;
+    rdfs:label "Dichiarazione Congiunta"@it ;
+    rdfs:subClassOf iso17025:DemonstratingTraceability ;
+    skos:notation "A.3.2" ;
+    rdfs:comment "Dichiarazione congiunta BIPM, OIML, ILAC e ISO sulla riferibilità"@it .
+
+# ============================================================================
+# APPENDICE B: OPZIONI PER IL SISTEMA DI GESTIONE
+# ============================================================================
+
+iso17025:AppendixB_ManagementSystemOptions a owl:Class ;
+    rdfs:label "Appendice B - Opzioni Sistema di Gestione"@it ;
+    rdfs:label "Annex B - Management System Options"@en ;
+    rdfs:subClassOf iso17025:ISO17025Standard ;
+    rdfs:comment "Appendice informativa sulle opzioni per il sistema di gestione"@it .
+
+iso17025:OptionADescription a owl:Class ;
+    rdfs:label "Descrizione Opzione A"@it ;
+    rdfs:subClassOf iso17025:AppendixB_ManagementSystemOptions ;
+    skos:notation "B.2" ;
+    rdfs:comment "Requisiti minimi per attuazione sistema di gestione"@it .
+
+iso17025:OptionBDescription a owl:Class ;
+    rdfs:label "Descrizione Opzione B"@it ;
+    rdfs:subClassOf iso17025:AppendixB_ManagementSystemOptions ;
+    skos:notation "B.3" ;
+    rdfs:comment "Sistema di gestione in conformità a ISO 9001"@it .
+
+iso17025:OptionsEquivalence a owl:Class ;
+    rdfs:label "Equivalenza Opzioni"@it ;
+    rdfs:subClassOf iso17025:AppendixB_ManagementSystemOptions ;
+    skos:notation "B.4" ;
+    rdfs:comment "Entrambe le opzioni raggiungono stesso risultato"@it .
+
+iso17025:ProcessRepresentation a owl:Class ;
+    rdfs:label "Rappresentazione Processi"@it ;
+    rdfs:subClassOf iso17025:AppendixB_ManagementSystemOptions ;
+    skos:notation "B.5" ;
+    rdfs:comment "Possibile rappresentazione schematica dei processi operativi"@it .
+
+# ============================================================================
+# OBJECT PROPERTIES - ESPANSIONE COMPLETA
+# ============================================================================
+
+## Relazioni Laboratorio
+iso17025:hasLaboratory a owl:ObjectProperty ;
+    rdfs:label "ha laboratorio"@it ;
+    rdfs:label "has laboratory"@en ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range iso17025:Laboratory ;
+    rdfs:comment "Relazione tra rapporto e laboratorio che lo ha emesso"@it .
+
+iso17025:isResponsibleFor a owl:ObjectProperty ;
+    rdfs:label "è responsabile di"@it ;
+    rdfs:domain iso17025:LaboratoryManagement ;
+    rdfs:range iso17025:Laboratory .
+
+iso17025:operatesIn a owl:ObjectProperty ;
+    rdfs:label "opera in"@it ;
+    rdfs:domain iso17025:Laboratory ;
+    rdfs:range iso17025:ScopeOfActivities .
+
+## Relazioni Personale
+iso17025:performedBy a owl:ObjectProperty ;
+    rdfs:label "eseguito da"@it ;
+    rdfs:label "performed by"@en ;
+    rdfs:domain iso17025:LaboratoryActivity ;
+    rdfs:range iso17025:Personnel .
+
+iso17025:authorizedBy a owl:ObjectProperty ;
+    rdfs:label "autorizzato da"@it ;
+    rdfs:label "authorized by"@en ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range iso17025:Personnel .
+
+iso17025:hasCompetence a owl:ObjectProperty ;
+    rdfs:label "ha competenza"@it ;
+    rdfs:domain iso17025:Personnel ;
+    rdfs:range iso17025:PersonnelCompetence .
+
+iso17025:supervisedBy a owl:ObjectProperty ;
+    rdfs:label "supervisionato da"@it ;
+    rdfs:domain iso17025:Personnel ;
+    rdfs:range iso17025:Personnel .
+
+iso17025:isTrainedIn a owl:ObjectProperty ;
+    rdfs:label "è formato in"@it ;
+    rdfs:domain iso17025:Personnel ;
+    rdfs:range iso17025:PersonnelTraining .
+
+## Relazioni Dotazioni
+iso17025:usesEquipment a owl:ObjectProperty ;
+    rdfs:label "usa dotazione"@it ;
+    rdfs:label "uses equipment"@en ;
+    rdfs:domain iso17025:Method ;
+    rdfs:range iso17025:Equipment .
+
+iso17025:calibratedBy a owl:ObjectProperty ;
+    rdfs:label "tarato da"@it ;
+    rdfs:label "calibrated by"@en ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range iso17025:CalibrationCertificate .
+
+iso17025:hasCalibrationStatus a owl:ObjectProperty ;
+    rdfs:label "ha stato di taratura"@it ;
+    rdfs:label "has calibration status"@en ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range iso17025:CalibrationStatus .
+
+iso17025:requiresMaintenance a owl:ObjectProperty ;
+    rdfs:label "richiede manutenzione"@it ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range iso17025:EquipmentHandling .
+
+## Relazioni Metodi
+iso17025:hasMethod a owl:ObjectProperty ;
+    rdfs:label "ha metodo"@it ;
+    rdfs:label "has method"@en ;
+    rdfs:domain iso17025:TestReport ;
+    rdfs:range iso17025:Method .
+
+iso17025:validatedBy a owl:ObjectProperty ;
+    rdfs:label "validato da"@it ;
+    rdfs:label "validated by"@en ;
+    rdfs:domain iso17025:Method ;
+    rdfs:range iso17025:MethodValidation .
+
+iso17025:hasUncertainty a owl:ObjectProperty ;
+    rdfs:label "ha incertezza"@it ;
+    rdfs:label "has uncertainty"@en ;
+    rdfs:domain iso17025:TestReport ;
+    rdfs:range iso17025:MeasurementUncertainty .
+
+iso17025:basedOnStandard a owl:ObjectProperty ;
+    rdfs:label "basato su norma"@it ;
+    rdfs:domain iso17025:Method ;
+    rdfs:range iso17025:ISO17025Standard .
+
+## Relazioni Campioni
+iso17025:hasSample a owl:ObjectProperty ;
+    rdfs:label "ha campione"@it ;
+    rdfs:label "has sample"@en ;
+    rdfs:domain iso17025:TestReport ;
+    rdfs:range iso17025:ItemHandling ;
+    owl:equivalentProperty sosa:hasSample .
+
+iso17025:sampledFrom a owl:ObjectProperty ;
+    rdfs:label "campionato da"@it ;
+    rdfs:label "sampled from"@en ;
+    rdfs:domain iso17025:ItemHandling ;
+    rdfs:range iso17025:Sampling .
+
+iso17025:hasIdentification a owl:ObjectProperty ;
+    rdfs:label "ha identificazione"@it ;
+    rdfs:domain iso17025:ItemHandling ;
+    rdfs:range iso17025:ItemIdentification .
+
+## Relazioni Riferibilità
+iso17025:traceableTo a owl:ObjectProperty ;
+    rdfs:label "riferibile a"@it ;
+    rdfs:label "traceable to"@en ;
+    rdfs:domain iso17025:CalibrationCertificate ;
+    rdfs:range iso17025:MetrologicalTraceability ;
+    rdfs:subPropertyOf prov:wasDerivedFrom .
+
+iso17025:hasTraceabilityChain a owl:ObjectProperty ;
+    rdfs:label "ha catena di riferibilità"@it ;
+    rdfs:domain iso17025:MetrologicalTraceability ;
+    rdfs:range iso17025:UnbrokenCalibrationChain .
+
+## Relazioni Sistema di Gestione
+iso17025:hasRisk a owl:ObjectProperty ;
+    rdfs:label "ha rischio"@it ;
+    rdfs:label "has risk"@en ;
+    rdfs:domain iso17025:ManagementSystemOptionA ;
+    rdfs:range iso17025:Risk .
+
+iso17025:hasOpportunity a owl:ObjectProperty ;
+    rdfs:label "ha opportunità"@it ;
+    rdfs:domain iso17025:ManagementSystemOptionA ;
+    rdfs:range iso17025:Opportunity .
+
+iso17025:hasCorrectiveAction a owl:ObjectProperty ;
+    rdfs:label "ha azione correttiva"@it ;
+    rdfs:label "has corrective action"@en ;
+    rdfs:domain iso17025:NonconformingWork ;
+    rdfs:range iso17025:CorrectiveAction .
+
+iso17025:hasAuditProgram a owl:ObjectProperty ;
+    rdfs:label "ha programma di audit"@it ;
+    rdfs:label "has audit program"@en ;
+    rdfs:domain iso17025:InternalAudit ;
+    rdfs:range iso17025:AuditProgram .
+
+iso17025:reviewedBy a owl:ObjectProperty ;
+    rdfs:label "riesaminato da"@it ;
+    rdfs:domain iso17025:ManagementReview ;
+    rdfs:range iso17025:LaboratoryManagement .
+
+## Relazioni Rapporti
+iso17025:includesResults a owl:ObjectProperty ;
+    rdfs:label "include risultati"@it ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range iso17025:TechnicalRecord .
+
+iso17025:hasStatementOfConformity a owl:ObjectProperty ;
+    rdfs:label "ha dichiarazione di conformità"@it ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range iso17025:StatementOfConformity .
+
+iso17025:hasOpinion a owl:ObjectProperty ;
+    rdfs:label "ha opinione"@it ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range iso17025:OpinionsInterpretations .
+
+## Relazioni Reclami
+iso17025:hasComplaint a owl:ObjectProperty ;
+    rdfs:label "ha reclamo"@it ;
+    rdfs:domain iso17025:Laboratory ;
+    rdfs:range iso17025:Complaint .
+
+iso17025:handledBy a owl:ObjectProperty ;
+    rdfs:label "gestito da"@it ;
+    rdfs:domain iso17025:Complaint ;
+    rdfs:range iso17025:ComplaintProcess .
+
+## Relazioni Imparzialità e Riservatezza
+iso17025:hasImpartialityRisk a owl:ObjectProperty ;
+    rdfs:label "ha rischio imparzialità"@it ;
+    rdfs:domain iso17025:Laboratory ;
+    rdfs:range iso17025:RiskToImpartiality .
+
+iso17025:hasConfidentialityAgreement a owl:ObjectProperty ;
+    rdfs:label "ha accordo di riservatezza"@it ;
+    rdfs:domain iso17025:Laboratory ;
+    rdfs:range iso17025:ConfidentialityAgreement .
+
+## Relazioni Clienti
+iso17025:hasClient a owl:ObjectProperty ;
+    rdfs:label "ha cliente"@it ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range foaf:Agent .
+
+iso17025:requestedBy a owl:ObjectProperty ;
+    rdfs:label "richiesto da"@it ;
+    rdfs:domain iso17025:LaboratoryActivity ;
+    rdfs:range foaf:Agent .
+
+# ============================================================================
+# DATA PROPERTIES - ESPANSIONE COMPLETA
+# ============================================================================
+
+## Proprietà ISO 17025
+iso17025:hasClauseNumber a owl:DatatypeProperty ;
+    rdfs:label "ha numero clausola"@it ;
+    rdfs:label "has clause number"@en ;
+    rdfs:domain iso17025:CompetenceRequirement ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Numero della clausola nella norma ISO 17025"@it .
+
+iso17025:hasRequirementText a owl:DatatypeProperty ;
+    rdfs:label "ha testo requisito"@it ;
+    rdfs:label "has requirement text"@en ;
+    rdfs:domain iso17025:CompetenceRequirement ;
+    rdfs:range xsd:string .
+
+iso17025:isDocumented a owl:DatatypeProperty ;
+    rdfs:label "è documentato"@it ;
+    rdfs:label "is documented"@en ;
+    rdfs:domain iso17025:Procedure ;
+    rdfs:range xsd:boolean .
+
+iso17025:hasVersion a owl:DatatypeProperty ;
+    rdfs:label "ha versione"@it ;
+    rdfs:domain iso17025:DocumentControl ;
+    rdfs:range xsd:string .
+
+## Proprietà Rapporti
+iso17025:hasReportNumber a owl:DatatypeProperty ;
+    rdfs:label "ha numero rapporto"@it ;
+    rdfs:label "has report number"@en ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range xsd:string .
+
+iso17025:hasIssueDate a owl:DatatypeProperty ;
+    rdfs:label "ha data emissione"@it ;
+    rdfs:label "has issue date"@en ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range xsd:date .
+
+iso17025:hasRevisionDate a owl:DatatypeProperty ;
+    rdfs:label "ha data revisione"@it ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range xsd:date .
+
+iso17025:hasUniqueIdentifier a owl:DatatypeProperty ;
+    rdfs:label "ha identificativo univoco"@it ;
+    rdfs:domain iso17025:Report ;
+    rdfs:range xsd:string .
+
+## Proprietà Incertezza
+iso17025:hasUncertaintyValue a owl:DatatypeProperty ;
+    rdfs:label "ha valore incertezza"@it ;
+    rdfs:label "has uncertainty value"@en ;
+    rdfs:domain iso17025:MeasurementUncertainty ;
+    rdfs:range xsd:decimal .
+
+iso17025:hasConfidenceLevel a owl:DatatypeProperty ;
+    rdfs:label "ha livello di confidenza"@it ;
+    rdfs:domain iso17025:MeasurementUncertainty ;
+    rdfs:range xsd:decimal .
+
+iso17025:hasCoverageFactor a owl:DatatypeProperty ;
+    rdfs:label "ha fattore di copertura"@it ;
+    rdfs:domain iso17025:MeasurementUncertainty ;
+    rdfs:range xsd:decimal .
+
+## Proprietà Personale
+iso17025:hasQualification a owl:DatatypeProperty ;
+    rdfs:label "ha qualifica"@it ;
+    rdfs:domain iso17025:Personnel ;
+    rdfs:range xsd:string .
+
+iso17025:hasExperience a owl:DatatypeProperty ;
+    rdfs:label "ha esperienza"@it ;
+    rdfs:domain iso17025:Personnel ;
+    rdfs:range xsd:string .
+
+iso17025:hasTrainingDate a owl:DatatypeProperty ;
+    rdfs:label "ha data formazione"@it ;
+    rdfs:domain iso17025:PersonnelTraining ;
+    rdfs:range xsd:date .
+
+iso17025:isAuthorized a owl:DatatypeProperty ;
+    rdfs:label "è autorizzato"@it ;
+    rdfs:domain iso17025:Personnel ;
+    rdfs:range xsd:boolean .
+
+## Proprietà Dotazioni
+iso17025:hasSerialNumber a owl:DatatypeProperty ;
+    rdfs:label "ha numero di serie"@it ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range xsd:string .
+
+iso17025:hasManufacturer a owl:DatatypeProperty ;
+    rdfs:label "ha produttore"@it ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range xsd:string .
+
+iso17025:hasModel a owl:DatatypeProperty ;
+    rdfs:label "ha modello"@it ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range xsd:string .
+
+iso17025:hasCalibrationDate a owl:DatatypeProperty ;
+    rdfs:label "ha data taratura"@it ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range xsd:date .
+
+iso17025:hasNextCalibrationDate a owl:DatatypeProperty ;
+    rdfs:label "ha data prossima taratura"@it ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range xsd:date .
+
+iso17025:isInService a owl:DatatypeProperty ;
+    rdfs:label "è in servizio"@it ;
+    rdfs:domain iso17025:Equipment ;
+    rdfs:range xsd:boolean .
+
+## Proprietà Metodi
+iso17025:hasMethodCode a owl:DatatypeProperty ;
+    rdfs:label "ha codice metodo"@it ;
+    rdfs:domain iso17025:Method ;
+    rdfs:range xsd:string .
+
+iso17025:hasMethodVersion a owl:DatatypeProperty ;
+    rdfs:label "ha versione metodo"@it ;
+    rdfs:domain iso17025:Method ;
+    rdfs:range xsd:string .
+
+iso17025:isValidated a owl:DatatypeProperty ;
+    rdfs:label "è validato"@it ;
+    rdfs:domain iso17025:Method ;
+    rdfs:range xsd:boolean .
+
+iso17025:hasValidationDate a owl:DatatypeProperty ;
+    rdfs:label "ha data validazione"@it ;
+    rdfs:domain iso17025:MethodValidation ;
+    rdfs:range xsd:date .
+
+## Proprietà Campioni
+iso17025:hasSampleCode a owl:DatatypeProperty ;
+    rdfs:label "ha codice campione"@it ;
+    rdfs:domain iso17025:ItemHandling ;
+    rdfs:range xsd:string .
+
+iso17025:hasReceiptDate a owl:DatatypeProperty ;
+    rdfs:label "ha data ricevimento"@it ;
+    rdfs:domain iso17025:ItemHandling ;
+    rdfs:range xsd:dateTime .
+
+iso17025:hasSamplingDate a owl:DatatypeProperty ;
+    rdfs:label "ha data campionamento"@it ;
+    rdfs:domain iso17025:Sampling ;
+    rdfs:range xsd:dateTime .
+
+iso17025:hasStorageConditions a owl:DatatypeProperty ;
+    rdfs:label "ha condizioni conservazione"@it ;
+    rdfs:domain iso17025:ItemHandling ;
+    rdfs:range xsd:string .
+
+## Proprietà Condizioni Ambientali
+iso17025:hasTemperature a owl:DatatypeProperty ;
+    rdfs:label "ha temperatura"@it ;
+    rdfs:domain iso17025:EnvironmentalMonitoring ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Temperatura in gradi Celsius"@it .
+
+iso17025:hasHumidity a owl:DatatypeProperty ;
+    rdfs:label "ha umidità"@it ;
+    rdfs:domain iso17025:EnvironmentalMonitoring ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Umidità relativa percentuale"@it .
+
+iso17025:hasPressure a owl:DatatypeProperty ;
+    rdfs:label "ha pressione"@it ;
+    rdfs:domain iso17025:EnvironmentalMonitoring ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Pressione in Pascal"@it .
+
+## Proprietà Audit e Riesami
+iso17025:hasAuditDate a owl:DatatypeProperty ;
+    rdfs:label "ha data audit"@it ;
+    rdfs:domain iso17025:InternalAudit ;
+    rdfs:range xsd:date .
+
+iso17025:hasAuditScope a owl:DatatypeProperty ;
+    rdfs:label "ha campo audit"@it ;
+    rdfs:domain iso17025:InternalAudit ;
+    rdfs:range xsd:string .
+
+iso17025:hasReviewDate a owl:DatatypeProperty ;
+    rdfs:label "ha data riesame"@it ;
+    rdfs:domain iso17025:ManagementReview ;
+    rdfs:range xsd:date .
+
+## Proprietà Conformità
+iso17025:hasComplianceStatus a owl:DatatypeProperty ;
+    rdfs:label "ha stato conformità"@it ;
+    rdfs:label "has compliance status"@en ;
+    rdfs:domain iso17025:StatementOfConformity ;
+    rdfs:range xsd:boolean .
+
+iso17025:hasComplianceLevel a owl:DatatypeProperty ;
+    rdfs:label "ha livello conformità"@it ;
+    rdfs:label "has compliance level"@en ;
+    rdfs:domain iso17025:StatementOfConformity ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Valori: 'Completo', 'Parziale', 'Non conforme'"@it .
+
+iso17025:hasDecisionRuleText a owl:DatatypeProperty ;
+    rdfs:label "ha testo regola decisionale"@it ;
+    rdfs:domain iso17025:DecisionRule ;
+    rdfs:range xsd:string .
+
+# ============================================================================
+# REGOLE DI VALIDAZIONE E VINCOLI
+# ============================================================================
+
+## Assiomi di Classe
+iso17025:CompetentLaboratory a owl:Class ;
+    rdfs:label "Laboratorio Competente"@it ;
+    rdfs:label "Competent Laboratory"@en ;
+    rdfs:comment "Un laboratorio che soddisfa tutti i requisiti ISO 17025"@it ;
+    owl:equivalentClass [
+        rdf:type owl:Class ;
+        owl:intersectionOf (
+            iso17025:Laboratory
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasImpartialityRisk ;
+              owl:allValuesFrom iso17025:ImpartialityRiskMitigation ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasConfidentialityAgreement ;
+              owl:minCardinality "1"^^xsd:nonNegativeInteger ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasCompetence ;
+              owl:someValuesFrom iso17025:PersonnelCompetence ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:usesEquipment ;
+              owl:allValuesFrom iso17025:CalibratedEquipment ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasMethod ;
+              owl:allValuesFrom iso17025:ValidatedMethod ]
+        )
+    ] .
+
+iso17025:CalibratedEquipment a owl:Class ;
+    rdfs:label "Dotazione Tarata"@it ;
+    rdfs:comment "Dotazione con taratura valida"@it ;
+    owl:equivalentClass [
+        rdf:type owl:Class ;
+        owl:intersectionOf (
+            iso17025:Equipment
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasCalibrationStatus ;
+              owl:hasValue "Valid" ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasCalibrationDate ;
+              owl:someValuesFrom xsd:date ]
+        )
+    ] .
+
+iso17025:ValidatedMethod a owl:Class ;
+    rdfs:label "Metodo Validato"@it ;
+    rdfs:comment "Metodo che è stato validato"@it ;
+    owl:equivalentClass [
+        rdf:type owl:Class ;
+        owl:intersectionOf (
+            iso17025:Method
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:isValidated ;
+              owl:hasValue "true"^^xsd:boolean ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:validatedBy ;
+              owl:someValuesFrom iso17025:MethodValidation ]
+        )
+    ] .
+
+iso17025:CompleteReport a owl:Class ;
+    rdfs:label "Rapporto Completo"@it ;
+    rdfs:comment "Rapporto che contiene tutti gli elementi richiesti"@it ;
+    owl:equivalentClass [
+        rdf:type owl:Class ;
+        owl:intersectionOf (
+            iso17025:Report
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasReportNumber ;
+              owl:cardinality "1"^^xsd:nonNegativeInteger ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasIssueDate ;
+              owl:cardinality "1"^^xsd:nonNegativeInteger ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasMethod ;
+              owl:minCardinality "1"^^xsd:nonNegativeInteger ]
+            [ rdf:type owl:Restriction ;
+              owl:onProperty iso17025:hasUncertainty ;
+              owl:someValuesFrom iso17025:MeasurementUncertainty ]
+        )
+    ] .
+
+## Disgiunzioni
+iso17025:ManagementSystemOptionA owl:disjointWith iso17025:ManagementSystemOptionB .
+iso17025:Testing owl:disjointWith iso17025:Calibration .
+iso17025:InternalAudit owl:disjointWith iso17025:ExternalEvaluations .
+iso17025:PermanentFacility owl:disjointWith iso17025:TemporarySite .
+
+## Proprietà Funzionali
+iso17025:hasReportNumber a owl:FunctionalProperty .
+iso17025:hasSerialNumber a owl:FunctionalProperty .
+iso17025:hasSampleCode a owl:FunctionalProperty .
+
+## Proprietà Inverse
+iso17025:performs a owl:ObjectProperty ;
+    owl:inverseOf iso17025:performedBy .
+
+iso17025:authorizes a owl:ObjectProperty ;
+    owl:inverseOf iso17025:authorizedBy .
+
+iso17025:calibrates a owl:ObjectProperty ;
+    owl:inverseOf iso17025:calibratedBy .
+
+# ============================================================================
+# INDIVIDUI E ISTANZE ESEMPIO
+# ============================================================================
+
+## Esempio Laboratorio Competente
+:ExampleCompetentLab a owl:NamedIndividual , iso17025:CompetentLaboratory ;
+    rdfs:label "Laboratorio Esempio Competente"@it ;
+    iso17025:hasCompetence :LabCompetence ;
+    iso17025:operatesIn :DefinedScope ;
+    iso17025:hasImpartialityRisk :MitigatedRisk ;
+    iso17025:hasConfidentialityAgreement :ConfAgreement .
+
+## Esempio Rapporto di Prova Completo
+:ExampleTestReport2025 a owl:NamedIndividual , iso17025:CompleteReport ;
+    rdfs:label "Rapporto di Prova 2025-001"@it ;
+    iso17025:hasReportNumber "LAB-2025-001" ;
+    iso17025:hasIssueDate "2025-01-15"^^xsd:date ;
+    iso17025:hasMethod :ValidatedTestMethod ;
+    iso17025:hasUncertainty :MeasurementUncertainty2025 ;
+    iso17025:hasSample :Sample2025001 ;
+    iso17025:authorizedBy :TechnicalDirector .
+
+:ValidatedTestMethod a owl:NamedIndividual , iso17025:ValidatedMethod ;
+    rdfs:label "Metodo di Prova Validato"@it ;
+    iso17025:hasMethodCode "ISO-TEST-001" ;
+    iso17025:isValidated "true"^^xsd:boolean ;
+    iso17025:hasValidationDate "2024-12-01"^^xsd:date .
+
+:MeasurementUncertainty2025 a owl:NamedIndividual , iso17025:MeasurementUncertainty ;
+    iso17025:hasUncertaintyValue "0.05"^^xsd:decimal ;
+    iso17025:hasConfidenceLevel "95"^^xsd:decimal ;
+    iso17025:hasCoverageFactor "2"^^xsd:decimal .
+
+## Esempio Personale Autorizzato
+:TechnicalDirector a owl:NamedIndividual , iso17025:Personnel ;
+    rdfs:label "Direttore Tecnico"@it ;
+    foaf:name "Mario Rossi" ;
+    iso17025:hasQualification "Laurea in Chimica" ;
+    iso17025:hasExperience "15 anni" ;
+    iso17025:isAuthorized "true"^^xsd:boolean ;
+    iso17025:hasCompetence :DirectorCompetence .
+
+## Esempio Dotazione Tarata
+:CalibratedBalance a owl:NamedIndividual , iso17025:CalibratedEquipment ;
+    rdfs:label "Bilancia Tarata"@it ;
+    iso17025:hasSerialNumber "BAL-2024-001" ;
+    iso17025:hasManufacturer "Mettler Toledo" ;
+    iso17025:hasModel "XPE205" ;
+    iso17025:hasCalibrationDate "2024-06-15"^^xsd:date ;
+    iso17025:hasNextCalibrationDate "2025-06-15"^^xsd:date ;
+    iso17025:isInService "true"^^xsd:boolean .
+
+# ============================================================================
+# ANNOTAZIONI E METADATI FINALI
+# ============================================================================
+
+iso17025:ISO17025Ontology a owl:Ontology ;
+    rdfs:comment """Questa ontologia fornisce una rappresentazione semantica completa ed esaustiva
+    della norma ISO/IEC 17025:2018 con:
+    - Mappatura completa di tutte le 8 clausole e appendici
+    - Definizione granulare di tutti i requisiti e sotto-requisiti
+    - Relazioni dettagliate tra tutti i concetti
+    - Proprietà dati complete per tutti gli aspetti
+    - Vincoli e regole di validazione
+    - Esempi di individui e istanze
+    - Integrazione con ontologie standard di riferimento
+    - Documentazione bilingue (italiano/inglese)"""@it .
+
+# Fine dell'ontologia ISO/IEC 17025:2018 completa ed esaustiva@prefix : <http://www.semanticweb.org/iso17025/ontology#> .
+@prefix iso17025: <http://www.semanticweb.org/iso17025/ontology#> .
+@prefix ags4: <http://www.semanticweb.org/ags4/ontology#> .
+@prefix omt: <http://www.semanticweb.org/omt/ontology#> .
+@prefix obi: <http://purl.obolibrary.org/obo/OBI_> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix bfo: <http://purl.obolibrary.org/obo/BFO_> .
+@prefix ssn: <http://www.w3.org/ns/ssn/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix org: <http://www.w3.org/ns/org#> .
+@prefix time: <http://www.w3.org/2006/time#> .
+@prefix dqv: <http://www.w3.org/ns/dqv#> .
+
+# ============================================================================
+# ONTOLOGY DECLARATION
+# ============================================================================
+
+<http://www.semanticweb.org/iso17025/ontology> rdf:type owl:Ontology ;
+    owl:versionInfo "2.0.0" ;
+    dcterms:title "ISO/IEC 17025:2018 Ontologia Completa ed Esaustiva"@it ;
+    dcterms:title "ISO/IEC 17025:2018 Complete and Comprehensive Ontology"@en ;
+    dcterms:description """Ontologia OWL completa per ISO/IEC 17025:2018 - Requisiti generali per la competenza 
+    dei laboratori di prova e taratura, con integrazione completa del formato dati AGS4 geotecnico e 
+    mappatura dettagliata di tutti i requisiti normativi."""@it ;
+    dcterms:creator "Enhanced AI Assistant based on ISO/IEC 17025:2018 standard" ;
+    dcterms:created "2025-01-01"^^xsd:date ;
+    dcterms:modified "2025-01-15"^^xsd:date ;
+    dcterms:license <http://creativecommons.org/licenses/by/4.0/> ;
+    rdfs:comment """Questa ontologia modella in modo esaustivo:
+    - Tutti i requisiti ISO/IEC 17025:2018 (clausole 1-8 e appendici)
+    - Integrazione completa con ontologie standard (OMT, OBI, QUDT, PROV-O, SSN/SOSA)
+    - Modello completo del dominio geotecnico AGS4
+    - Regole di validazione e conformità dettagliate
+    - Mappature complete tra domini"""@it .
+
+# ============================================================================
+# CLAUSOLA 1-3: SCOPO, RIFERIMENTI NORMATIVI E TERMINI
+# ============================================================================
+
+## Concetti Fondamentali ISO 17025
+iso17025:ISO17025Standard a owl:Class ;
+    rdfs:label "Norma ISO/IEC 17025:2018"@it ;
+    rdfs:label "ISO/IEC 17025:2018 Standard"@en ;
+    rdfs:comment "La norma internazionale che specifica i requisiti generali per la competenza dei laboratori di prova e taratura"@it ;
+    rdfs:subClassOf bfo:InformationContentEntity ;
+    rdfs:seeAlso <https://www.iso.org/standard/66912.html> .
+
+iso17025:CompetenceRequirement a owl:Class ;
+    rdfs:label "Requisito di Competenza"@it ;
+    rdfs:label "Competence Requirement"@en ;
+    rdfs:comment "Classe astratta per tutti i requisiti definiti in ISO 17025:2018"@it ;
+    rdfs:subClassOf bfo:Disposition ;
+    owl:disjointWith iso17025:NonCompetenceRequirement .
+
+iso17025:NonCompetenceRequirement a owl:Class ;
+    rdfs:label "Requisito Non di Competenza"@it ;
+    rdfs:comment "Requisiti non direttamente correlati alla competenza tecnica"@it .
+
+## Definizioni Chiave (Clausola 3)
+iso17025:Laboratory a owl:Class ;
+    rdfs:label "Laboratorio"@it ;
+    rdfs:label "Laboratory"@en ;
+    rdfs:comment "Organismo che esegue una o più fra le seguenti attività: prova, taratura, campionamento associato a successiva prova o taratura"@it ;
+    rdfs:subClassOf org:Organization ;
+    skos:notation "3.6" .
+
+iso17025:LaboratoryActivity a owl:Class ;
+    rdfs:label "Attività di Laboratorio"@it ;
+    rdfs:label "Laboratory Activity"@en ;
+    rdfs:comment "Prova, taratura o campionamento associato a successiva prova o taratura"@it ;
+    skos:notation "3.6 Nota 1" ;
+    owl:equivalentClass [
+        rdf:type owl:Class ;
+        owl:unionOf (
+            iso17025:Testing
+            iso17025:Calibration
+            iso17025:SamplingActivity
+        )
+    ] .
+
+iso17025:Testing a owl:Class ;
+    rdfs:label "Prova"@it ;
+    rdfs:label "Testing"@en ;
+    rdfs:subClassOf iso17025:LaboratoryActivity ;
+    rdfs:comment "Determinazione di una o più caratteristiche secondo una procedura"@it .
+
+iso17025:Calibration a owl:Class ;
+    rdfs:label "Taratura"@it ;
+    rdfs:label "Calibration"@en ;
+    rdfs:subClassOf iso17025:LaboratoryActivity ;
+    rdfs:comment "Operazione che stabilisce una relazione tra i valori indicati da uno strumento e i valori corrispondenti di grandezze realizzati da campioni"@it ;
+    owl:equivalentClass omt:CalibrationProcess .
+
+iso17025:SamplingActivity a owl:Class ;
+    rdfs:label "Attività di Campionamento"@it ;
+    rdfs:label "Sampling Activity"@en ;
+    rdfs:subClassOf iso17025:LaboratoryActivity ;
+    rdfs:comment "Campionamento associato a successiva prova o taratura"@it ;
+    owl:equivalentClass sosa:Sampling .
+
+iso17025:Verification a owl:Class ;
+    rdfs:label "Verifica"@it ;
+    rdfs:label "Verification"@en ;
+    rdfs:comment "Messa a disposizione dell'evidenza oggettiva che un dato elemento soddisfa uno o più requisiti specificati"@it ;
+    skos:notation "3.8" ;
+    rdfs:subClassOf bfo:Process .
+
+iso17025:Validation a owl:Class ;
+    rdfs:label "Validazione"@it ;
+    rdfs:label "Validation"@en ;
+    rdfs:comment "Verifica nella quale i requisiti specificati sono adeguati a un utilizzo previsto"@it ;
+    skos:notation "3.9" ;
+    rdfs:subClassOf iso17025:Verification .
+
+iso17025:DecisionRule a owl:Class ;
+    rdfs:label "Regola Decisionale"@it ;
+    rdfs:label "Decision Rule"@en ;
+    rdfs:comment "Regola che descrive in che modo si tiene conto dell'incertezza di misura quando si dichiara la conformità a un requisito specificato"@it ;
+    skos:notation "3.7" .
+
+iso17025:InterlaboratoryComparison a owl:Class ;
+    rdfs:label "Confronto Interlaboratorio"@it ;
+    rdfs:label "Interlaboratory Comparison"@en ;
+    rdfs:comment "Organizzazione, esecuzione e valutazione di misurazioni o prove sugli stessi oggetti o su oggetti simili da parte di due o più laboratori"@it ;
+    skos:notation "3.3" .
+
+iso17025:IntralaboratoryComparison a owl:Class ;
+    rdfs:label "Confronto Intralaboratorio"@it ;
+    rdfs:label "Intralaboratory Comparison"@en ;
+    rdfs:comment "Organizzazione, esecuzione e valutazione di misurazioni o prove sugli stessi oggetti o su oggetti simili, nell'ambito dello stesso laboratorio"@it ;
+    skos:notation "3.4" .
+
+iso17025:ProficiencyTesting a owl:Class ;
+    rdfs:label "Prova Valutativa Interlaboratorio"@it ;
+    rdfs:label "Proficiency Testing"@en ;
+    rdfs:comment "Valutazione delle prestazioni di un partecipante a fronte di criteri prestabiliti mediante confronti interlaboratorio"@it ;
+    skos:notation "3.5" ;
+    rdfs:subClassOf iso17025:InterlaboratoryComparison .
+
+iso17025:Complaint a owl:Class ;
+    rdfs:label "Reclamo"@it ;
+    rdfs:label "Complaint"@en ;
+    rdfs:comment "Espressione d'insoddisfazione manifestata da una persona o da una organizzazione ad un laboratorio relativa alle attività o ai risultati di tale laboratorio, per la quale è attesa una risposta"@it ;
+    skos:notation "3.2" .
+
+# ============================================================================
+# CLAUSOLA 4: REQUISITI GENERALI
+# ============================================================================
+
+iso17025:Clause4_GeneralRequirements a owl:Class ;
+    rdfs:label "Clausola 4 - Requisiti Generali"@it ;
+    rdfs:label "Clause 4 - General Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti generali per imparzialità e riservatezza"@it .
+
+## 4.1 Imparzialità - Dettaglio Completo
+iso17025:Impartiality a owl:Class ;
+    rdfs:label "Imparzialità"@it ;
+    rdfs:label "Impartiality"@en ;
+    rdfs:subClassOf iso17025:Clause4_GeneralRequirements ;
+    rdfs:comment "Presenza di obiettività"@it ;
+    skos:notation "4.1" ;
+    skos:definition "Obiettività significa che non esistono conflitti di interesse, o che questi sono risolti in modo da non influenzare negativamente le conseguenti attività del laboratorio"@it .
+
+iso17025:ImpartialityManagement a owl:Class ;
+    rdfs:label "Gestione dell'Imparzialità"@it ;
+    rdfs:subClassOf iso17025:Impartiality ;
+    skos:notation "4.1.1" ;
+    rdfs:comment "Le attività del laboratorio devono essere effettuate in modo imparziale e strutturate e gestite in modo da salvaguardare l'imparzialità"@it .
+
+iso17025:TopManagementCommitment a owl:Class ;
+    rdfs:label "Impegno della Direzione"@it ;
+    rdfs:subClassOf iso17025:Impartiality ;
+    skos:notation "4.1.2" ;
+    rdfs:comment "La direzione del laboratorio deve impegnarsi per l'imparzialità"@it .
+
+iso17025:ImpartialityResponsibility a owl:Class ;
+    rdfs:label "Responsabilità per l'Imparzialità"@it ;
+    rdfs:subClassOf iso17025:Impartiality ;
+    skos:notation "4.1.3" ;
+    rdfs:comment "Il laboratorio deve essere responsabile dell'imparzialità delle proprie attività di laboratorio"@it .
+
+iso17025:RiskToImpartiality a owl:Class ;
+    rdfs:label "Rischio per l'Imparzialità"@it ;
+    rdfs:label "Risk to Impartiality"@en ;
+    rdfs:subClassOf iso17025:Impartiality ;
+    skos:notation "4.1.4" ;
+    rdfs:comment "Il laboratorio deve identificare su base continuativa i rischi per la propria imparzialità"@it .
+
+iso17025:ImpartialityRiskSource a owl:Class ;
+    rdfs:label "Fonte di Rischio per l'Imparzialità"@it ;
+    rdfs:subClassOf iso17025:RiskToImpartiality ;
+    rdfs:comment "Fonti di rischio per l'imparzialità incluse proprietà, governance, direzione, personale, risorse condivise, aspetti finanziari, contratti, marketing"@it .
+
+iso17025:ImpartialityRiskMitigation a owl:Class ;
+    rdfs:label "Mitigazione del Rischio per l'Imparzialità"@it ;
+    rdfs:subClassOf iso17025:RiskToImpartiality ;
+    skos:notation "4.1.5" ;
+    rdfs:comment "Se viene identificato un rischio per l'imparzialità, il laboratorio deve essere in grado di dimostrare come elimina o minimizza tale rischio"@it .
+
+## 4.2 Riservatezza - Dettaglio Completo
+iso17025:Confidentiality a owl:Class ;
+    rdfs:label "Riservatezza"@it ;
+    rdfs:label "Confidentiality"@en ;
+    rdfs:subClassOf iso17025:Clause4_GeneralRequirements ;
+    skos:notation "4.2" ;
+    rdfs:comment "Gestione di tutte le informazioni ottenute o generate nel corso dell'effettuazione delle attività di laboratorio"@it .
+
+iso17025:LegallyEnforceableCommitment a owl:Class ;
+    rdfs:label "Impegno Legalmente Vincolante"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    skos:notation "4.2.1" ;
+    rdfs:comment "Il laboratorio deve essere responsabile, per mezzo di impegni legalmente vincolanti, della gestione di tutte le informazioni"@it .
+
+iso17025:ProprietaryInformation a owl:Class ;
+    rdfs:label "Informazioni Proprietarie"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    rdfs:comment "Tutte le informazioni non rese pubbliche dal cliente sono considerate informazioni proprietarie e riservate"@it .
+
+iso17025:PublicDomainInformation a owl:Class ;
+    rdfs:label "Informazioni di Pubblico Dominio"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    rdfs:comment "Informazioni che il laboratorio intende rendere di pubblico dominio con preavviso al cliente"@it .
+
+iso17025:LegalDisclosure a owl:Class ;
+    rdfs:label "Comunicazione per Obbligo di Legge"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    skos:notation "4.2.2" ;
+    rdfs:comment "Quando al laboratorio è richiesto per legge di comunicare informazioni riservate"@it .
+
+iso17025:ThirdPartyInformation a owl:Class ;
+    rdfs:label "Informazioni da Terze Parti"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    skos:notation "4.2.3" ;
+    rdfs:comment "Informazioni relative al cliente ottenute da fonti diverse dal cliente stesso"@it .
+
+iso17025:PersonnelConfidentiality a owl:Class ;
+    rdfs:label "Riservatezza del Personale"@it ;
+    rdfs:subClassOf iso17025:Confidentiality ;
+    skos:notation "4.2.4" ;
+    rdfs:comment "Il personale deve mantenere riservate tutte le informazioni ottenute o generate"@it .
+
+# ============================================================================
+# CLAUSOLA 5: REQUISITI STRUTTURALI - ESPANSIONE COMPLETA
+# ============================================================================
+
+iso17025:Clause5_StructuralRequirements a owl:Class ;
+    rdfs:label "Clausola 5 - Requisiti Strutturali"@it ;
+    rdfs:label "Clause 5 - Structural Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti per la struttura organizzativa e le responsabilità"@it .
+
+## 5.1 Soggetto Giuridico
+iso17025:LegalEntity a owl:Class ;
+    rdfs:label "Soggetto Giuridico"@it ;
+    rdfs:label "Legal Entity"@en ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    rdfs:subClassOf org:FormalOrganization ;
+    skos:notation "5.1" ;
+    rdfs:comment "Il laboratorio deve essere un soggetto giuridico, o una parte definita di esso"@it .
+
+iso17025:PublicLaboratory a owl:Class ;
+    rdfs:label "Laboratorio Pubblico"@it ;
+    rdfs:subClassOf iso17025:LegalEntity ;
+    rdfs:comment "Un laboratorio pubblico è considerato un soggetto giuridico sulla base della propria natura pubblica"@it .
+
+iso17025:PrivateLaboratory a owl:Class ;
+    rdfs:label "Laboratorio Privato"@it ;
+    rdfs:subClassOf iso17025:LegalEntity ;
+    rdfs:comment "Laboratorio operante come entità privata"@it .
+
+## 5.2 Direzione del Laboratorio
+iso17025:LaboratoryManagement a owl:Class ;
+    rdfs:label "Direzione del Laboratorio"@it ;
+    rdfs:label "Laboratory Management"@en ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.2" ;
+    rdfs:comment "Il laboratorio deve identificare la direzione che ha la responsabilità complessiva del laboratorio"@it .
+
+iso17025:OverallResponsibility a owl:Class ;
+    rdfs:label "Responsabilità Complessiva"@it ;
+    rdfs:subClassOf iso17025:LaboratoryManagement ;
+    rdfs:comment "Responsabilità complessiva per il laboratorio"@it .
+
+## 5.3 Gamma di Attività
+iso17025:ScopeOfActivities a owl:Class ;
+    rdfs:label "Gamma delle Attività"@it ;
+    rdfs:label "Scope of Activities"@en ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.3" ;
+    rdfs:comment "Il laboratorio deve definire e documentare la gamma delle proprie attività di laboratorio"@it .
+
+iso17025:DocumentedScope a owl:Class ;
+    rdfs:label "Campo di Applicazione Documentato"@it ;
+    rdfs:subClassOf iso17025:ScopeOfActivities ;
+    rdfs:comment "Campo di applicazione documentato per cui il laboratorio opera in conformità"@it .
+
+iso17025:ExcludedActivities a owl:Class ;
+    rdfs:label "Attività Escluse"@it ;
+    rdfs:subClassOf iso17025:ScopeOfActivities ;
+    rdfs:comment "Attività fornite dall'esterno su base continuativa sono escluse"@it .
+
+## 5.4 Conformità delle Attività
+iso17025:ActivityCompliance a owl:Class ;
+    rdfs:label "Conformità delle Attività"@it ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.4" ;
+    rdfs:comment "Le attività devono essere conformi ai requisiti del presente documento, dei clienti, delle autorità e delle organizzazioni"@it .
+
+iso17025:PermanentFacility a owl:Class ;
+    rdfs:label "Struttura Permanente"@it ;
+    rdfs:subClassOf iso17025:ActivityCompliance ;
+    rdfs:comment "Attività eseguite presso le strutture permanenti del laboratorio"@it .
+
+iso17025:TemporarySite a owl:Class ;
+    rdfs:label "Sito Temporaneo"@it ;
+    rdfs:subClassOf iso17025:ActivityCompliance ;
+    rdfs:comment "Attività eseguite presso sedi temporanee o mobili"@it .
+
+iso17025:CustomerSite a owl:Class ;
+    rdfs:label "Sede del Cliente"@it ;
+    rdfs:subClassOf iso17025:ActivityCompliance ;
+    rdfs:comment "Attività eseguite presso le strutture dei clienti"@it .
+
+## 5.5 Struttura Organizzativa
+iso17025:OrganizationalStructure a owl:Class ;
+    rdfs:label "Struttura Organizzativa"@it ;
+    rdfs:label "Organizational Structure"@en ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.5" ;
+    rdfs:comment "Il laboratorio deve definire la propria organizzazione e struttura direttiva"@it .
+
+iso17025:ManagementStructure a owl:Class ;
+    rdfs:label "Struttura Direttiva"@it ;
+    rdfs:subClassOf iso17025:OrganizationalStructure ;
+    skos:notation "5.5.a" ;
+    rdfs:comment "Definizione della struttura direttiva e collocazione nell'organizzazione"@it .
+
+iso17025:ResponsibilityAuthority a owl:Class ;
+    rdfs:label "Responsabilità e Autorità"@it ;
+    rdfs:subClassOf iso17025:OrganizationalStructure ;
+    skos:notation "5.5.b" ;
+    rdfs:comment "Specificare responsabilità, autorità e interazioni del personale"@it .
+
+iso17025:DocumentedProcedures a owl:Class ;
+    rdfs:label "Procedure Documentate"@it ;
+    rdfs:subClassOf iso17025:OrganizationalStructure ;
+    skos:notation "5.5.c" ;
+    rdfs:comment "Documentare le procedure per assicurare esecuzione regolare e coerente"@it .
+
+## 5.6 Personale con Autorità
+iso17025:AuthorizedPersonnel a owl:Class ;
+    rdfs:label "Personale con Autorità"@it ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.6" ;
+    rdfs:comment "Personale con autorità e risorse necessarie per eseguire i propri compiti"@it .
+
+iso17025:SystemImplementation a owl:Class ;
+    rdfs:label "Attuazione del Sistema"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.a" ;
+    rdfs:comment "Attuazione, mantenimento e miglioramento del sistema di gestione"@it .
+
+iso17025:DeviationIdentification a owl:Class ;
+    rdfs:label "Identificazione Scostamenti"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.b" ;
+    rdfs:comment "Identificazione di scostamenti dal sistema di gestione"@it .
+
+iso17025:PreventiveAction a owl:Class ;
+    rdfs:label "Azione Preventiva"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.c" ;
+    rdfs:comment "Avvio di azioni per prevenire o minimizzare scostamenti"@it .
+
+iso17025:ManagementReporting a owl:Class ;
+    rdfs:label "Reporting alla Direzione"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.d" ;
+    rdfs:comment "Riferire alla direzione circa le prestazioni del sistema"@it .
+
+iso17025:ActivityEffectiveness a owl:Class ;
+    rdfs:label "Efficacia delle Attività"@it ;
+    rdfs:subClassOf iso17025:AuthorizedPersonnel ;
+    skos:notation "5.6.e" ;
+    rdfs:comment "Assicurare l'efficacia delle attività di laboratorio"@it .
+
+## 5.7 Comunicazione della Direzione
+iso17025:ManagementCommunication a owl:Class ;
+    rdfs:label "Comunicazione della Direzione"@it ;
+    rdfs:subClassOf iso17025:Clause5_StructuralRequirements ;
+    skos:notation "5.7" ;
+    rdfs:comment "La direzione del laboratorio deve assicurare le comunicazioni"@it .
+
+iso17025:EffectivenessCommunication a owl:Class ;
+    rdfs:label "Comunicazione sull'Efficacia"@it ;
+    rdfs:subClassOf iso17025:ManagementCommunication ;
+    skos:notation "5.7.a" ;
+    rdfs:comment "Comunicazioni relative all'efficacia del sistema di gestione"@it .
+
+iso17025:SystemIntegrity a owl:Class ;
+    rdfs:label "Integrità del Sistema"@it ;
+    rdfs:subClassOf iso17025:ManagementCommunication ;
+    skos:notation "5.7.b" ;
+    rdfs:comment "Mantenimento dell'integrità del sistema quando vengono pianificate modifiche"@it .
+
+# ============================================================================
+# CLAUSOLA 6: REQUISITI RELATIVI ALLE RISORSE - ESPANSIONE COMPLETA
+# ============================================================================
+
+iso17025:Clause6_ResourceRequirements a owl:Class ;
+    rdfs:label "Clausola 6 - Requisiti relativi alle Risorse"@it ;
+    rdfs:label "Clause 6 - Resource Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti per personale, strutture, dotazioni, sistemi e servizi di supporto"@it .
+
+## 6.1 Generalità
+iso17025:ResourceGeneralRequirements a owl:Class ;
+    rdfs:label "Requisiti Generali delle Risorse"@it ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.1" ;
+    rdfs:comment "Il laboratorio deve disporre del personale, delle strutture, delle dotazioni, dei sistemi e dei servizi di supporto necessari"@it .
+
+## 6.2 Personale - Dettaglio Completo
+iso17025:Personnel a owl:Class ;
+    rdfs:label "Personale"@it ;
+    rdfs:label "Personnel"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    rdfs:subClassOf foaf:Person ;
+    skos:notation "6.2" ;
+    rdfs:comment "Tutto il personale del laboratorio che potrebbe influenzare le attività"@it .
+
+iso17025:PersonnelImpartiality a owl:Class ;
+    rdfs:label "Imparzialità del Personale"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.1" ;
+    rdfs:comment "Tutto il personale deve agire con imparzialità"@it .
+
+iso17025:PersonnelCompetence a owl:Class ;
+    rdfs:label "Competenza del Personale"@it ;
+    rdfs:label "Personnel Competence"@en ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.2" ;
+    rdfs:comment "Il laboratorio deve documentare i requisiti di competenza per ogni funzione"@it .
+
+iso17025:CompetenceRequirementsDetail a owl:Class ;
+    rdfs:label "Dettagli Requisiti di Competenza"@it ;
+    rdfs:subClassOf iso17025:PersonnelCompetence ;
+    rdfs:comment "Requisiti di istruzione, qualifica, formazione, conoscenza tecnica, abilità ed esperienza"@it .
+
+iso17025:PersonnelEvaluation a owl:Class ;
+    rdfs:label "Valutazione del Personale"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.3" ;
+    rdfs:comment "Assicurare che il personale abbia la competenza per eseguire le attività"@it .
+
+iso17025:PersonnelCommunication a owl:Class ;
+    rdfs:label "Comunicazione al Personale"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.4" ;
+    rdfs:comment "La direzione deve comunicare al personale i relativi compiti, responsabilità ed autorità"@it .
+
+iso17025:PersonnelManagementProcedure a owl:Class ;
+    rdfs:label "Procedura Gestione Personale"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.5" ;
+    rdfs:comment "Il laboratorio deve disporre di procedure per la gestione del personale"@it .
+
+iso17025:CompetenceDetermination a owl:Class ;
+    rdfs:label "Determinazione Requisiti Competenza"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.a" .
+
+iso17025:PersonnelSelection a owl:Class ;
+    rdfs:label "Selezione del Personale"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.b" .
+
+iso17025:PersonnelTraining a owl:Class ;
+    rdfs:label "Formazione del Personale"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.c" .
+
+iso17025:PersonnelSupervision a owl:Class ;
+    rdfs:label "Supervisione del Personale"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.d" .
+
+iso17025:PersonnelAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione del Personale"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.e" .
+
+iso17025:CompetenceMonitoring a owl:Class ;
+    rdfs:label "Monitoraggio della Competenza"@it ;
+    rdfs:subClassOf iso17025:PersonnelManagementProcedure ;
+    skos:notation "6.2.5.f" .
+
+iso17025:SpecificActivityAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Attività Specifiche"@it ;
+    rdfs:subClassOf iso17025:Personnel ;
+    skos:notation "6.2.6" ;
+    rdfs:comment "Il laboratorio deve autorizzare personale che esegua specifiche attività"@it .
+
+iso17025:MethodDevelopmentAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Sviluppo Metodi"@it ;
+    rdfs:subClassOf iso17025:SpecificActivityAuthorization ;
+    skos:notation "6.2.6.a" ;
+    rdfs:comment "Sviluppo, modifica, verifica e validazione dei metodi"@it .
+
+iso17025:ResultAnalysisAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Analisi Risultati"@it ;
+    rdfs:subClassOf iso17025:SpecificActivityAuthorization ;
+    skos:notation "6.2.6.b" ;
+    rdfs:comment "Analisi dei risultati, compresa la dichiarazione di conformità"@it .
+
+iso17025:ReportApprovalAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Approvazione Rapporti"@it ;
+    rdfs:subClassOf iso17025:SpecificActivityAuthorization ;
+    skos:notation "6.2.6.c" ;
+    rdfs:comment "Presentazione, riesame e approvazione dei risultati"@it .
+
+## 6.3 Strutture e Condizioni Ambientali - Dettaglio Completo
+iso17025:Facilities a owl:Class ;
+    rdfs:label "Strutture e Condizioni Ambientali"@it ;
+    rdfs:label "Facilities and Environmental Conditions"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.3" ;
+    rdfs:seeAlso ssn:Platform .
+
+iso17025:FacilitySuitability a owl:Class ;
+    rdfs:label "Idoneità delle Strutture"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.1" ;
+    rdfs:comment "Le strutture devono essere idonee e non influire negativamente sulla validità dei risultati"@it .
+
+iso17025:EnvironmentalFactors a owl:Class ;
+    rdfs:label "Fattori Ambientali"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    rdfs:comment "Fattori che possono avere impatto negativo: contaminazione, polvere, disturbi elettromagnetici, radiazioni, umidità, temperatura"@it .
+
+iso17025:EnvironmentalRequirementsDocumentation a owl:Class ;
+    rdfs:label "Documentazione Requisiti Ambientali"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.2" ;
+    rdfs:comment "I requisiti relativi alle strutture e alle condizioni ambientali devono essere documentati"@it .
+
+iso17025:EnvironmentalMonitoring a owl:Class ;
+    rdfs:label "Monitoraggio Ambientale"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.3" ;
+    rdfs:comment "Il laboratorio deve monitorare, tenere sotto controllo e registrare le condizioni ambientali"@it ;
+    owl:equivalentClass sosa:Observation .
+
+iso17025:FacilityControl a owl:Class ;
+    rdfs:label "Controllo delle Strutture"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.4" ;
+    rdfs:comment "Misure per mantenere sotto controllo le strutture"@it .
+
+iso17025:AccessControl a owl:Class ;
+    rdfs:label "Controllo Accessi"@it ;
+    rdfs:subClassOf iso17025:FacilityControl ;
+    skos:notation "6.3.4.a" ;
+    rdfs:comment "Accesso alle aree che influiscono sulle attività di laboratorio"@it .
+
+iso17025:ContaminationPrevention a owl:Class ;
+    rdfs:label "Prevenzione Contaminazioni"@it ;
+    rdfs:subClassOf iso17025:FacilityControl ;
+    skos:notation "6.3.4.b" ;
+    rdfs:comment "Prevenzione di contaminazioni, interferenze o influenze negative"@it .
+
+iso17025:AreaSeparation a owl:Class ;
+    rdfs:label "Separazione Aree"@it ;
+    rdfs:subClassOf iso17025:FacilityControl ;
+    skos:notation "6.3.4.c" ;
+    rdfs:comment "Efficace separazione tra aree con attività incompatibili"@it .
+
+iso17025:ExternalSiteControl a owl:Class ;
+    rdfs:label "Controllo Siti Esterni"@it ;
+    rdfs:subClassOf iso17025:Facilities ;
+    skos:notation "6.3.5" ;
+    rdfs:comment "Assicurare requisiti quando si opera in siti al di fuori del controllo permanente"@it .
+
+## 6.4 Dotazioni - Dettaglio Completo
+iso17025:Equipment a owl:Class ;
+    rdfs:label "Dotazioni"@it ;
+    rdfs:label "Equipment"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.4" ;
+    owl:equivalentClass ssn:System ;
+    rdfs:comment "Dotazioni necessarie per eseguire correttamente le attività di laboratorio"@it .
+
+iso17025:RequiredEquipment a owl:Class ;
+    rdfs:label "Dotazioni Necessarie"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.1" ;
+    rdfs:comment "Strumenti di misura, software, campioni di riferimento, materiali di riferimento, dati di riferimento, reagenti"@it .
+
+iso17025:MeasurementInstrument a owl:Class ;
+    rdfs:label "Strumento di Misura"@it ;
+    rdfs:subClassOf iso17025:RequiredEquipment ;
+    owl:equivalentClass sosa:Sensor .
+
+iso17025:Software a owl:Class ;
+    rdfs:label "Software"@it ;
+    rdfs:subClassOf iso17025:RequiredEquipment ;
+    rdfs:comment "Software utilizzato nelle attività di laboratorio"@it .
+
+iso17025:ReferenceMaterial a owl:Class ;
+    rdfs:label "Materiale di Riferimento"@it ;
+    rdfs:label "Reference Material"@en ;
+    rdfs:subClassOf iso17025:RequiredEquipment ;
+    owl:equivalentClass obi:0000747 ;
+    rdfs:comment "Materiali di riferimento e materiali di riferimento certificati"@it .
+
+iso17025:CertifiedReferenceMaterial a owl:Class ;
+    rdfs:label "Materiale di Riferimento Certificato"@it ;
+    rdfs:subClassOf iso17025:ReferenceMaterial ;
+    rdfs:comment "Materiali di riferimento certificati con valori certificati e incertezza associata"@it .
+
+iso17025:ExternalEquipment a owl:Class ;
+    rdfs:label "Dotazioni Esterne"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.2" ;
+    rdfs:comment "Dotazioni al di fuori del controllo permanente del laboratorio"@it .
+
+iso17025:EquipmentHandling a owl:Class ;
+    rdfs:label "Manipolazione Dotazioni"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.3" ;
+    rdfs:comment "Procedura per manipolazione, trasporto, conservazione, utilizzo e manutenzione"@it .
+
+iso17025:EquipmentVerification a owl:Class ;
+    rdfs:label "Verifica Dotazioni"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.4" ;
+    rdfs:comment "Verificare che le dotazioni siano conformi prima di metterle in servizio"@it .
+
+iso17025:MeasurementAccuracy a owl:Class ;
+    rdfs:label "Accuratezza di Misura"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.5" ;
+    rdfs:comment "Le dotazioni devono consentire di ottenere l'accuratezza richiesta"@it .
+
+iso17025:EquipmentCalibration a owl:Class ;
+    rdfs:label "Taratura Apparecchiature"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.6" ;
+    rdfs:comment "Le apparecchiature di misura devono essere tarate quando necessario"@it .
+
+iso17025:CalibrationProgram a owl:Class ;
+    rdfs:label "Programma di Taratura"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.7" ;
+    rdfs:comment "Programma di taratura riesaminato e aggiornato"@it .
+
+iso17025:CalibrationLabeling a owl:Class ;
+    rdfs:label "Etichettatura Taratura"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.8" ;
+    rdfs:comment "Dotazioni etichettate per riconoscere lo stato di taratura"@it .
+
+iso17025:OutOfServiceEquipment a owl:Class ;
+    rdfs:label "Dotazioni Fuori Servizio"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.9" ;
+    rdfs:comment "Dotazioni difettose devono essere poste fuori servizio"@it .
+
+iso17025:IntermediateCheck a owl:Class ;
+    rdfs:label "Verifiche Intermedie"@it ;
+    rdfs:label "Intermediate Check"@en ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.10" ;
+    rdfs:comment "Verifiche intermedie per mantenere la fiducia nelle prestazioni"@it .
+
+iso17025:CalibrationData a owl:Class ;
+    rdfs:label "Dati di Taratura"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.11" ;
+    rdfs:comment "Valori di riferimento o fattori di correzione aggiornati"@it .
+
+iso17025:UnintentionalAdjustmentPrevention a owl:Class ;
+    rdfs:label "Prevenzione Regolazioni Non Intenzionali"@it ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.12" ;
+    rdfs:comment "Accorgimenti per impedire regolazioni non intenzionali"@it .
+
+iso17025:EquipmentRecord a owl:Class ;
+    rdfs:label "Registrazioni Dotazioni"@it ;
+    rdfs:label "Equipment Record"@en ;
+    rdfs:subClassOf iso17025:Equipment ;
+    skos:notation "6.4.13" ;
+    rdfs:comment "Registrazioni per le dotazioni che possono influire sulle attività"@it .
+
+## 6.5 Riferibilità Metrologica - Dettaglio Completo
+iso17025:MetrologicalTraceability a owl:Class ;
+    rdfs:label "Riferibilità Metrologica"@it ;
+    rdfs:label "Metrological Traceability"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.5" ;
+    rdfs:seeAlso omt:MetrologicalTraceability ;
+    owl:equivalentClass prov:Entity ;
+    rdfs:comment "Proprietà di un risultato di misura per cui esso è posto in relazione ad un riferimento"@it .
+
+iso17025:TraceabilityChain a owl:Class ;
+    rdfs:label "Catena di Riferibilità"@it ;
+    rdfs:subClassOf iso17025:MetrologicalTraceability ;
+    skos:notation "6.5.1" ;
+    rdfs:comment "Catena documentata e ininterrotta di tarature"@it .
+
+iso17025:SITraceability a owl:Class ;
+    rdfs:label "Riferibilità al SI"@it ;
+    rdfs:subClassOf iso17025:MetrologicalTraceability ;
+    skos:notation "6.5.2" ;
+    rdfs:comment "Riferibilità al Sistema Internazionale di Unità"@it .
+
+iso17025:CalibrationByCompetentLab a owl:Class ;
+    rdfs:label "Taratura da Laboratorio Competente"@it ;
+    rdfs:subClassOf iso17025:SITraceability ;
+    skos:notation "6.5.2.a" ;
+    rdfs:comment "Taratura effettuata da un laboratorio competente"@it .
+
+iso17025:CertifiedRMValues a owl:Class ;
+    rdfs:label "Valori Certificati MR"@it ;
+    rdfs:subClassOf iso17025:SITraceability ;
+    skos:notation "6.5.2.b" ;
+    rdfs:comment "Valori certificati di materiali di riferimento certificati"@it .
+
+iso17025:DirectSIRealization a owl:Class ;
+    rdfs:label "Realizzazione Diretta SI"@it ;
+    rdfs:subClassOf iso17025:SITraceability ;
+    skos:notation "6.5.2.c" ;
+    rdfs:comment "Realizzazione diretta di unità SI"@it .
+
+iso17025:NonSITraceability a owl:Class ;
+    rdfs:label "Riferibilità Non-SI"@it ;
+    rdfs:subClassOf iso17025:MetrologicalTraceability ;
+    skos:notation "6.5.3" ;
+    rdfs:comment "Riferibilità quando non è possibile al SI"@it .
+
+## 6.6 Prodotti e Servizi Forniti dall'Esterno
+iso17025:ExternalProducts a owl:Class ;
+    rdfs:label "Prodotti e Servizi Esterni"@it ;
+    rdfs:label "Externally Provided Products and Services"@en ;
+    rdfs:subClassOf iso17025:Clause6_ResourceRequirements ;
+    skos:notation "6.6" ;
+    rdfs:comment "Prodotti e servizi forniti dall'esterno"@it .
+
+iso17025:ExternalProductSuitability a owl:Class ;
+    rdfs:label "Idoneità Prodotti Esterni"@it ;
+    rdfs:subClassOf iso17025:ExternalProducts ;
+    skos:notation "6.6.1" ;
+    rdfs:comment "Assicurare che vengano utilizzati solo prodotti e servizi idonei"@it .
+
+iso17025:ExternalProviderManagement a owl:Class ;
+    rdfs:label "Gestione Fornitori Esterni"@it ;
+    rdfs:subClassOf iso17025:ExternalProducts ;
+    skos:notation "6.6.2" ;
+    rdfs:comment "Procedura per gestione fornitori esterni"@it .
+
+iso17025:ExternalProviderCommunication a owl:Class ;
+    rdfs:label "Comunicazione Fornitori Esterni"@it ;
+    rdfs:subClassOf iso17025:ExternalProducts ;
+    skos:notation "6.6.3" ;
+    rdfs:comment "Comunicare requisiti ai fornitori esterni"@it .
+
+# ============================================================================
+# CLAUSOLA 7: REQUISITI DI PROCESSO - ESPANSIONE COMPLETA
+# ============================================================================
+
+iso17025:Clause7_ProcessRequirements a owl:Class ;
+    rdfs:label "Clausola 7 - Requisiti di Processo"@it ;
+    rdfs:label "Clause 7 - Process Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti per i processi operativi del laboratorio"@it .
+
+## 7.1 Riesame delle Richieste, Offerte e Contratti
+iso17025:RequestReview a owl:Class ;
+    rdfs:label "Riesame Richieste, Offerte e Contratti"@it ;
+    rdfs:label "Review of Requests, Tenders and Contracts"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.1" .
+
+iso17025:ReviewProcedure a owl:Class ;
+    rdfs:label "Procedura di Riesame"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.1" ;
+    rdfs:comment "Procedura per il riesame delle richieste, offerte e contratti"@it .
+
+iso17025:RequirementDefinition a owl:Class ;
+    rdfs:label "Definizione Requisiti"@it ;
+    rdfs:subClassOf iso17025:ReviewProcedure ;
+    skos:notation "7.1.1.a" ;
+    rdfs:comment "I requisiti siano adeguatamente definiti, documentati e compresi"@it .
+
+iso17025:CapabilityAssessment a owl:Class ;
+    rdfs:label "Valutazione Capacità"@it ;
+    rdfs:subClassOf iso17025:ReviewProcedure ;
+    skos:notation "7.1.1.b" ;
+    rdfs:comment "Il laboratorio abbia la capacità e le risorse per soddisfare i requisiti"@it .
+
+iso17025:ExternalProviderNotification a owl:Class ;
+    rdfs:label "Notifica Fornitori Esterni"@it ;
+    rdfs:subClassOf iso17025:ReviewProcedure ;
+    skos:notation "7.1.1.c" ;
+    rdfs:comment "Avvisare il cliente circa attività eseguite da fornitori esterni"@it .
+
+iso17025:MethodSelection a owl:Class ;
+    rdfs:label "Selezione del Metodo"@it ;
+    rdfs:subClassOf iso17025:ReviewProcedure ;
+    skos:notation "7.1.1.d" ;
+    rdfs:comment "Siano scelti metodi o procedure appropriati"@it .
+
+iso17025:InappropriateMethodNotification a owl:Class ;
+    rdfs:label "Notifica Metodo Non Appropriato"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.2" ;
+    rdfs:comment "Informare il cliente quando il metodo richiesto è non appropriato"@it .
+
+iso17025:ConformityStatement a owl:Class ;
+    rdfs:label "Dichiarazione di Conformità"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.3" ;
+    rdfs:comment "Quando richiesta dichiarazione di conformità, definire specifica e regola decisionale"@it .
+
+iso17025:ContractDifferenceResolution a owl:Class ;
+    rdfs:label "Risoluzione Differenze Contrattuali"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.4" ;
+    rdfs:comment "Differenze tra richiesta e contratto devono essere risolte"@it .
+
+iso17025:DeviationNotification a owl:Class ;
+    rdfs:label "Notifica Scostamenti"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.5" ;
+    rdfs:comment "Il cliente deve essere informato circa ogni scostamento dal contratto"@it .
+
+iso17025:ContractAmendment a owl:Class ;
+    rdfs:label "Modifica Contratto"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.6" ;
+    rdfs:comment "Se il contratto viene modificato dopo l'avvio, ripetere il riesame"@it .
+
+iso17025:CustomerCooperation a owl:Class ;
+    rdfs:label "Cooperazione con Cliente"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.7" ;
+    rdfs:comment "Cooperare con i clienti per chiarire richieste e monitorare prestazioni"@it .
+
+iso17025:ReviewRecords a owl:Class ;
+    rdfs:label "Registrazioni del Riesame"@it ;
+    rdfs:subClassOf iso17025:RequestReview ;
+    skos:notation "7.1.8" ;
+    rdfs:comment "Le registrazioni dei riesami devono essere conservate"@it .
+
+## 7.2 Selezione, Verifica e Validazione dei Metodi
+iso17025:Method a owl:Class ;
+    rdfs:label "Metodo"@it ;
+    rdfs:label "Method"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.2" ;
+    owl:equivalentClass obi:0000272 .
+
+### 7.2.1 Selezione e Verifica dei Metodi
+iso17025:MethodSelectionVerification a owl:Class ;
+    rdfs:label "Selezione e Verifica Metodi"@it ;
+    rdfs:subClassOf iso17025:Method ;
+    skos:notation "7.2.1" .
+
+iso17025:AppropriateMethodUse a owl:Class ;
+    rdfs:label "Uso Metodi Appropriati"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.1" ;
+    rdfs:comment "Utilizzare metodi e procedure appropriati per tutte le attività"@it .
+
+iso17025:MethodDocumentationUpdate a owl:Class ;
+    rdfs:label "Aggiornamento Documentazione Metodi"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.2" ;
+    rdfs:comment "Metodi e documentazione mantenuti aggiornati e disponibili"@it .
+
+iso17025:ValidEditionUse a owl:Class ;
+    rdfs:label "Uso Edizione Valida"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.3" ;
+    rdfs:comment "Utilizzare l'ultima edizione valida dei metodi"@it .
+
+iso17025:MethodChoice a owl:Class ;
+    rdfs:label "Scelta del Metodo"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.4" ;
+    rdfs:comment "Scegliere metodo appropriato quando non specificato dal cliente"@it .
+
+iso17025:MethodCapabilityVerification a owl:Class ;
+    rdfs:label "Verifica Capacità Metodo"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.5" ;
+    rdfs:comment "Verificare di essere in grado di eseguire correttamente i metodi"@it .
+
+iso17025:MethodDevelopment a owl:Class ;
+    rdfs:label "Sviluppo del Metodo"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.6" ;
+    rdfs:comment "Lo sviluppo di metodi deve essere pianificato"@it .
+
+iso17025:MethodDeviation a owl:Class ;
+    rdfs:label "Scostamento dal Metodo"@it ;
+    rdfs:subClassOf iso17025:MethodSelectionVerification ;
+    skos:notation "7.2.1.7" ;
+    rdfs:comment "Scostamenti solo se documentati, giustificati e accettati"@it .
+
+### 7.2.2 Validazione dei Metodi
+iso17025:MethodValidation a owl:Class ;
+    rdfs:label "Validazione dei Metodi"@it ;
+    rdfs:label "Method Validation"@en ;
+    rdfs:subClassOf iso17025:Method ;
+    skos:notation "7.2.2" .
+
+iso17025:ValidationScope a owl:Class ;
+    rdfs:label "Campo di Validazione"@it ;
+    rdfs:subClassOf iso17025:MethodValidation ;
+    skos:notation "7.2.2.1" ;
+    rdfs:comment "Validare metodi non normalizzati, sviluppati dal laboratorio o modificati"@it .
+
+iso17025:ValidationModificationImpact a owl:Class ;
+    rdfs:label "Impatto Modifiche su Validazione"@it ;
+    rdfs:subClassOf iso17025:MethodValidation ;
+    skos:notation "7.2.2.2" ;
+    rdfs:comment "Determinare influenza modifiche sulla validazione originaria"@it .
+
+iso17025:PerformanceCharacteristics a owl:Class ;
+    rdfs:label "Caratteristiche Prestazionali"@it ;
+    rdfs:subClassOf iso17025:MethodValidation ;
+    skos:notation "7.2.2.3" ;
+    rdfs:comment "Le caratteristiche prestazionali devono tener conto delle esigenze"@it .
+
+iso17025:ValidationRecords a owl:Class ;
+    rdfs:label "Registrazioni Validazione"@it ;
+    rdfs:subClassOf iso17025:MethodValidation ;
+    skos:notation "7.2.2.4" ;
+    rdfs:comment "Conservare registrazioni relative alla validazione"@it .
+
+## 7.3 Campionamento
+iso17025:Sampling a owl:Class ;
+    rdfs:label "Campionamento"@it ;
+    rdfs:label "Sampling"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.3" ;
+    owl:equivalentClass sosa:Sampling .
+
+iso17025:SamplingPlan a owl:Class ;
+    rdfs:label "Piano di Campionamento"@it ;
+    rdfs:label "Sampling Plan"@en ;
+    rdfs:subClassOf iso17025:Sampling ;
+    skos:notation "7.3.1" ;
+    rdfs:comment "Piano e metodo di campionamento basato su metodi statistici"@it .
+
+iso17025:SamplingMethod a owl:Class ;
+    rdfs:label "Metodo di Campionamento"@it ;
+    rdfs:subClassOf iso17025:Sampling ;
+    skos:notation "7.3.2" ;
+    rdfs:comment "Il metodo di campionamento deve descrivere selezione, piano e preparazione"@it .
+
+iso17025:SamplingRecord a owl:Class ;
+    rdfs:label "Registrazioni Campionamento"@it ;
+    rdfs:label "Sampling Record"@en ;
+    rdfs:subClassOf iso17025:Sampling ;
+    skos:notation "7.3.3" ;
+    rdfs:comment "Conservare registrazioni dei dati di campionamento"@it .
+
+## 7.4 Manipolazione degli Oggetti
+iso17025:ItemHandling a owl:Class ;
+    rdfs:label "Manipolazione Oggetti"@it ;
+    rdfs:label "Handling of Test or Calibration Items"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.4" .
+
+iso17025:ItemHandlingProcedure a owl:Class ;
+    rdfs:label "Procedura Manipolazione Oggetti"@it ;
+    rdfs:subClassOf iso17025:ItemHandling ;
+    skos:notation "7.4.1" ;
+    rdfs:comment "Procedura per trasporto, ricezione, manipolazione, protezione"@it .
+
+iso17025:ItemIdentification a owl:Class ;
+    rdfs:label "Identificazione Oggetti"@it ;
+    rdfs:label "Item Identification"@en ;
+    rdfs:subClassOf iso17025:ItemHandling ;
+    skos:notation "7.4.2" ;
+    rdfs:comment "Sistema per identificazione univoca degli oggetti"@it .
+
+iso17025:ItemConditionDeviation a owl:Class ;
+    rdfs:label "Scostamento Condizioni Oggetto"@it ;
+    rdfs:subClassOf iso17025:ItemHandling ;
+    skos:notation "7.4.3" ;
+    rdfs:comment "Registrare scostamenti dalle condizioni specificate"@it .
+
+iso17025:ItemStorage a owl:Class ;
+    rdfs:label "Conservazione Oggetti"@it ;
+    rdfs:subClassOf iso17025:ItemHandling ;
+    skos:notation "7.4.4" ;
+    rdfs:comment "Mantenere, monitorare e registrare condizioni di conservazione"@it .
+
+## 7.5 Registrazioni Tecniche
+iso17025:TechnicalRecord a owl:Class ;
+    rdfs:label "Registrazioni Tecniche"@it ;
+    rdfs:label "Technical Records"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.5" ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Registrazioni tecniche relative ad ogni attività di laboratorio"@it .
+
+iso17025:RecordContent a owl:Class ;
+    rdfs:label "Contenuto Registrazioni"@it ;
+    rdfs:subClassOf iso17025:TechnicalRecord ;
+    skos:notation "7.5.1" ;
+    rdfs:comment "Registrazioni devono contenere risultati, rapporti e informazioni sufficienti"@it .
+
+iso17025:RecordCorrection a owl:Class ;
+    rdfs:label "Correzione Registrazioni"@it ;
+    rdfs:subClassOf iso17025:TechnicalRecord ;
+    skos:notation "7.5.2" ;
+    rdfs:comment "Le correzioni devono essere ricollegate alle versioni precedenti"@it .
+
+## 7.6 Valutazione dell'Incertezza di Misura
+iso17025:MeasurementUncertainty a owl:Class ;
+    rdfs:label "Incertezza di Misura"@it ;
+    rdfs:label "Measurement Uncertainty"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.6" ;
+    rdfs:seeAlso omt:MeasurementUncertainty ;
+    rdfs:seeAlso qudt:Uncertainty .
+
+iso17025:UncertaintyContributions a owl:Class ;
+    rdfs:label "Contributi all'Incertezza"@it ;
+    rdfs:subClassOf iso17025:MeasurementUncertainty ;
+    skos:notation "7.6.1" ;
+    rdfs:comment "Identificare i contributi all'incertezza di misura"@it .
+
+iso17025:CalibrationUncertainty a owl:Class ;
+    rdfs:label "Incertezza nelle Tarature"@it ;
+    rdfs:subClassOf iso17025:MeasurementUncertainty ;
+    skos:notation "7.6.2" ;
+    rdfs:comment "Valutare l'incertezza di misura per tutte le tarature"@it .
+
+iso17025:TestUncertainty a owl:Class ;
+    rdfs:label "Incertezza nelle Prove"@it ;
+    rdfs:subClassOf iso17025:MeasurementUncertainty ;
+    skos:notation "7.6.3" ;
+    rdfs:comment "Valutare l'incertezza di misura nelle prove"@it .
+
+## 7.7 Assicurazione della Validità dei Risultati
+iso17025:ValidityAssurance a owl:Class ;
+    rdfs:label "Assicurazione Validità Risultati"@it ;
+    rdfs:label "Ensuring the Validity of Results"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.7" .
+
+iso17025:InternalQualityControl a owl:Class ;
+    rdfs:label "Controllo Qualità Interno"@it ;
+    rdfs:subClassOf iso17025:ValidityAssurance ;
+    skos:notation "7.7.1" ;
+    rdfs:comment "Procedura per monitorare la validità dei risultati"@it .
+
+iso17025:QCMaterials a owl:Class ;
+    rdfs:label "Materiali Controllo Qualità"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.a" ;
+    rdfs:comment "Utilizzo di materiali di riferimento o materiali di controllo qualità"@it .
+
+iso17025:AlternativeInstrumentation a owl:Class ;
+    rdfs:label "Strumentazione Alternativa"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.b" ;
+    rdfs:comment "Utilizzo di strumentazione alternativa tarata"@it .
+
+iso17025:FunctionalChecks a owl:Class ;
+    rdfs:label "Verifiche Funzionali"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.c" ;
+    rdfs:comment "Verifiche funzionali delle apparecchiature"@it .
+
+iso17025:ControlCharts a owl:Class ;
+    rdfs:label "Carte di Controllo"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.d" ;
+    rdfs:comment "Utilizzo di carte di controllo"@it .
+
+iso17025:RetestingRetaratura a owl:Class ;
+    rdfs:label "Ripetizione Prove/Tarature"@it ;
+    rdfs:subClassOf iso17025:InternalQualityControl ;
+    skos:notation "7.7.1.f" ;
+    rdfs:comment "Ripetizione di prove o tarature"@it .
+
+iso17025:InterlaboratoryMonitoring a owl:Class ;
+    rdfs:label "Monitoraggio Interlaboratorio"@it ;
+    rdfs:subClassOf iso17025:ValidityAssurance ;
+    skos:notation "7.7.2" ;
+    rdfs:comment "Monitorare prestazioni mediante confronto con altri laboratori"@it .
+
+iso17025:ProficiencyTestingParticipation a owl:Class ;
+    rdfs:label "Partecipazione Prove Valutative"@it ;
+    rdfs:subClassOf iso17025:InterlaboratoryMonitoring ;
+    skos:notation "7.7.2.a" ;
+    rdfs:comment "Partecipazione a prove valutative interlaboratorio"@it .
+
+iso17025:DataAnalysisAndControl a owl:Class ;
+    rdfs:label "Analisi e Controllo Dati"@it ;
+    rdfs:subClassOf iso17025:ValidityAssurance ;
+    skos:notation "7.7.3" ;
+    rdfs:comment "I dati del monitoraggio devono essere analizzati e utilizzati"@it .
+
+## 7.8 Presentazione dei Risultati
+iso17025:Report a owl:Class ;
+    rdfs:label "Rapporto"@it ;
+    rdfs:label "Report"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.8" .
+
+### 7.8.1 Generalità
+iso17025:ReportGeneral a owl:Class ;
+    rdfs:label "Rapporti - Generalità"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.1" .
+
+iso17025:ResultReview a owl:Class ;
+    rdfs:label "Riesame Risultati"@it ;
+    rdfs:subClassOf iso17025:ReportGeneral ;
+    skos:notation "7.8.1.1" ;
+    rdfs:comment "I risultati devono essere riesaminati e approvati prima di essere emessi"@it .
+
+iso17025:ReportClarity a owl:Class ;
+    rdfs:label "Chiarezza Rapporti"@it ;
+    rdfs:subClassOf iso17025:ReportGeneral ;
+    skos:notation "7.8.1.2" ;
+    rdfs:comment "I risultati devono essere forniti in modo accurato, chiaro, univoco e oggettivo"@it .
+
+iso17025:SimplifiedReporting a owl:Class ;
+    rdfs:label "Presentazione Semplificata"@it ;
+    rdfs:subClassOf iso17025:ReportGeneral ;
+    skos:notation "7.8.1.3" ;
+    rdfs:comment "Quando concordato, i risultati possono essere presentati in modo semplificato"@it .
+
+### 7.8.2 Requisiti Comuni per i Rapporti
+iso17025:CommonReportRequirements a owl:Class ;
+    rdfs:label "Requisiti Comuni Rapporti"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.2" .
+
+iso17025:ReportContent a owl:Class ;
+    rdfs:label "Contenuto del Rapporto"@it ;
+    rdfs:subClassOf iso17025:CommonReportRequirements ;
+    skos:notation "7.8.2.1" ;
+    rdfs:comment "Ogni rapporto deve comprendere informazioni minime"@it .
+
+iso17025:ClientDataResponsibility a owl:Class ;
+    rdfs:label "Responsabilità Dati Cliente"@it ;
+    rdfs:subClassOf iso17025:CommonReportRequirements ;
+    skos:notation "7.8.2.2" ;
+    rdfs:comment "Dati forniti dal cliente devono essere chiaramente identificati"@it .
+
+### 7.8.3 Requisiti Specifici per Rapporti di Prova
+iso17025:TestReport a owl:Class ;
+    rdfs:label "Rapporto di Prova"@it ;
+    rdfs:label "Test Report"@en ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.3" .
+
+iso17025:TestReportContent a owl:Class ;
+    rdfs:label "Contenuto Rapporto di Prova"@it ;
+    rdfs:subClassOf iso17025:TestReport ;
+    skos:notation "7.8.3.1" ;
+    rdfs:comment "Requisiti aggiuntivi per rapporti di prova"@it .
+
+iso17025:TestReportSampling a owl:Class ;
+    rdfs:label "Campionamento in Rapporto di Prova"@it ;
+    rdfs:subClassOf iso17025:TestReport ;
+    skos:notation "7.8.3.2" ;
+    rdfs:comment "Conformità ai requisiti di campionamento"@it .
+
+### 7.8.4 Requisiti Specifici per Certificati di Taratura
+iso17025:CalibrationCertificate a owl:Class ;
+    rdfs:label "Certificato di Taratura"@it ;
+    rdfs:label "Calibration Certificate"@en ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.4" .
+
+iso17025:CalibrationCertificateContent a owl:Class ;
+    rdfs:label "Contenuto Certificato di Taratura"@it ;
+    rdfs:subClassOf iso17025:CalibrationCertificate ;
+    skos:notation "7.8.4.1" ;
+    rdfs:comment "Requisiti aggiuntivi per certificati di taratura"@it .
+
+iso17025:CalibrationInterval a owl:Class ;
+    rdfs:label "Intervallo di Taratura"@it ;
+    rdfs:subClassOf iso17025:CalibrationCertificate ;
+    skos:notation "7.8.4.3" ;
+    rdfs:comment "Non deve contenere raccomandazioni su intervallo se non concordato"@it .
+
+### 7.8.5 Presentazione Informazioni Campionamento
+iso17025:SamplingReport a owl:Class ;
+    rdfs:label "Rapporto Campionamento"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.5" ;
+    rdfs:comment "Informazioni relative al campionamento"@it .
+
+### 7.8.6 Dichiarazioni di Conformità
+iso17025:StatementOfConformity a owl:Class ;
+    rdfs:label "Dichiarazione di Conformità"@it ;
+    rdfs:label "Statement of Conformity"@en ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.6" .
+
+iso17025:DecisionRuleDocumentation a owl:Class ;
+    rdfs:label "Documentazione Regola Decisionale"@it ;
+    rdfs:subClassOf iso17025:StatementOfConformity ;
+    skos:notation "7.8.6.1" ;
+    rdfs:comment "Documentare la regola decisionale utilizzata"@it .
+
+iso17025:ConformityReporting a owl:Class ;
+    rdfs:label "Presentazione Conformità"@it ;
+    rdfs:subClassOf iso17025:StatementOfConformity ;
+    skos:notation "7.8.6.2" ;
+    rdfs:comment "Riportare dichiarazione identificando chiaramente applicabilità"@it .
+
+### 7.8.7 Opinioni e Interpretazioni
+iso17025:OpinionsInterpretations a owl:Class ;
+    rdfs:label "Opinioni e Interpretazioni"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.7" .
+
+iso17025:OpinionAuthorization a owl:Class ;
+    rdfs:label "Autorizzazione Opinioni"@it ;
+    rdfs:subClassOf iso17025:OpinionsInterpretations ;
+    skos:notation "7.8.7.1" ;
+    rdfs:comment "Solo personale autorizzato può rilasciare opinioni"@it .
+
+iso17025:OpinionBasis a owl:Class ;
+    rdfs:label "Base delle Opinioni"@it ;
+    rdfs:subClassOf iso17025:OpinionsInterpretations ;
+    skos:notation "7.8.7.2" ;
+    rdfs:comment "Opinioni basate sui risultati ottenuti"@it .
+
+iso17025:VerbalOpinions a owl:Class ;
+    rdfs:label "Opinioni Verbali"@it ;
+    rdfs:subClassOf iso17025:OpinionsInterpretations ;
+    skos:notation "7.8.7.3" ;
+    rdfs:comment "Conservare registrazione di comunicazioni verbali"@it .
+
+### 7.8.8 Correzioni dei Rapporti
+iso17025:ReportCorrection a owl:Class ;
+    rdfs:label "Correzioni Rapporti"@it ;
+    rdfs:subClassOf iso17025:Report ;
+    skos:notation "7.8.8" .
+
+iso17025:ModificationIdentification a owl:Class ;
+    rdfs:label "Identificazione Modifiche"@it ;
+    rdfs:subClassOf iso17025:ReportCorrection ;
+    skos:notation "7.8.8.1" ;
+    rdfs:comment "Ogni informazione modificata deve essere chiaramente identificata"@it .
+
+iso17025:CorrectionDocument a owl:Class ;
+    rdfs:label "Documento di Correzione"@it ;
+    rdfs:subClassOf iso17025:ReportCorrection ;
+    skos:notation "7.8.8.2" ;
+    rdfs:comment "Correzioni tramite ulteriore documento"@it .
+
+iso17025:CompleteReissue a owl:Class ;
+    rdfs:label "Riemissione Completa"@it ;
+    rdfs:subClassOf iso17025:ReportCorrection ;
+    skos:notation "7.8.8.3" ;
+    rdfs:comment "Rapporto completamente nuovo con riferimento all'originale"@it .
+
+## 7.9 Reclami
+iso17025:ComplaintProcess a owl:Class ;
+    rdfs:label "Processo Reclami"@it ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.9" .
+
+iso17025:ComplaintProcedure a owl:Class ;
+    rdfs:label "Procedura Reclami"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.1" ;
+    rdfs:comment "Processo documentato per ricevere, valutare e decidere sui reclami"@it .
+
+iso17025:ComplaintDescription a owl:Class ;
+    rdfs:label "Descrizione Processo Reclami"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.2" ;
+    rdfs:comment "Descrizione disponibile del processo di trattamento"@it .
+
+iso17025:ComplaintElements a owl:Class ;
+    rdfs:label "Elementi Processo Reclami"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.3" ;
+    rdfs:comment "Elementi minimi del processo di trattamento"@it .
+
+iso17025:ComplaintValidation a owl:Class ;
+    rdfs:label "Validazione Reclamo"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.4" ;
+    rdfs:comment "Raccolta e verifica informazioni per validazione"@it .
+
+iso17025:ComplaintAcknowledgment a owl:Class ;
+    rdfs:label "Conferma Reclamo"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.5" ;
+    rdfs:comment "Confermare ricezione e fornire aggiornamenti"@it .
+
+iso17025:ComplaintOutcome a owl:Class ;
+    rdfs:label "Esito Reclamo"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.6" ;
+    rdfs:comment "Esiti assunti da persone non coinvolte nell'attività originaria"@it .
+
+iso17025:ComplaintClosure a owl:Class ;
+    rdfs:label "Chiusura Reclamo"@it ;
+    rdfs:subClassOf iso17025:ComplaintProcess ;
+    skos:notation "7.9.7" ;
+    rdfs:comment "Comunicazione formale della conclusione"@it .
+
+## 7.10 Attività Non Conformi
+iso17025:NonconformingWork a owl:Class ;
+    rdfs:label "Attività Non Conformi"@it ;
+    rdfs:label "Nonconforming Work"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.10" .
+
+iso17025:NonconformityProcedure a owl:Class ;
+    rdfs:label "Procedura Non Conformità"@it ;
+    rdfs:subClassOf iso17025:NonconformingWork ;
+    skos:notation "7.10.1" ;
+    rdfs:comment "Procedura per gestione attività non conformi"@it .
+
+iso17025:NonconformityResponsibility a owl:Class ;
+    rdfs:label "Responsabilità Non Conformità"@it ;
+    rdfs:subClassOf iso17025:NonconformityProcedure ;
+    skos:notation "7.10.1.a" ;
+    rdfs:comment "Definire responsabilità e autorità per la gestione"@it .
+
+iso17025:RiskBasedActions a owl:Class ;
+    rdfs:label "Azioni Basate sul Rischio"@it ;
+    rdfs:subClassOf iso17025:NonconformityProcedure ;
+    skos:notation "7.10.1.b" ;
+    rdfs:comment "Azioni basate sui livelli di rischio stabiliti"@it .
+
+iso17025:NonconformityEvaluation a owl:Class ;
+    rdfs:label "Valutazione Non Conformità"@it ;
+    rdfs:subClassOf iso17025:NonconformityProcedure ;
+    skos:notation "7.10.1.c" ;
+    rdfs:comment "Valutazione della significatività e impatto"@it .
+
+iso17025:NonconformityRecords a owl:Class ;
+    rdfs:label "Registrazioni Non Conformità"@it ;
+    rdfs:subClassOf iso17025:NonconformingWork ;
+    skos:notation "7.10.2" ;
+    rdfs:comment "Conservare registrazioni sulle attività non conformi"@it .
+
+iso17025:RecurrenceEvaluation a owl:Class ;
+    rdfs:label "Valutazione Ricorrenza"@it ;
+    rdfs:subClassOf iso17025:NonconformingWork ;
+    skos:notation "7.10.3" ;
+    rdfs:comment "Valutare se potrebbero ripetersi e attuare azioni correttive"@it .
+
+## 7.11 Controllo dei Dati e Gestione delle Informazioni
+iso17025:DataControl a owl:Class ;
+    rdfs:label "Controllo Dati"@it ;
+    rdfs:label "Control of Data and Information Management"@en ;
+    rdfs:subClassOf iso17025:Clause7_ProcessRequirements ;
+    skos:notation "7.11" .
+
+iso17025:DataAvailability a owl:Class ;
+    rdfs:label "Disponibilità Dati"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.1" ;
+    rdfs:comment "Disporre di tutti i dati e informazioni necessari"@it .
+
+iso17025:InformationSystemValidation a owl:Class ;
+    rdfs:label "Validazione Sistemi Informativi"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.2" ;
+    rdfs:comment "Sistemi di gestione informazioni devono essere validati"@it .
+
+iso17025:SystemProtection a owl:Class ;
+    rdfs:label "Protezione Sistemi"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.3" ;
+    rdfs:comment "I sistemi devono essere protetti"@it .
+
+iso17025:UnauthorizedAccessProtection a owl:Class ;
+    rdfs:label "Protezione Accessi Non Autorizzati"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.a" .
+
+iso17025:DataIntegrity a owl:Class ;
+    rdfs:label "Integrità Dati"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.b" .
+
+iso17025:OperatingEnvironment a owl:Class ;
+    rdfs:label "Ambiente Operativo"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.c" .
+
+iso17025:SystemMaintenance a owl:Class ;
+    rdfs:label "Manutenzione Sistemi"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.d" .
+
+iso17025:SystemFailureRecording a owl:Class ;
+    rdfs:label "Registrazione Guasti Sistema"@it ;
+    rdfs:subClassOf iso17025:SystemProtection ;
+    skos:notation "7.11.3.e" .
+
+iso17025:OffSiteManagement a owl:Class ;
+    rdfs:label "Gestione Fuori Sede"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.4" ;
+    rdfs:comment "Gestione sistemi fuori sede o con fornitori esterni"@it .
+
+iso17025:InstructionAccess a owl:Class ;
+    rdfs:label "Accesso Istruzioni"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.5" ;
+    rdfs:comment "Istruzioni e manuali prontamente accessibili"@it .
+
+iso17025:CalculationVerification a owl:Class ;
+    rdfs:label "Verifica Calcoli"@it ;
+    rdfs:subClassOf iso17025:DataControl ;
+    skos:notation "7.11.6" ;
+    rdfs:comment "Calcoli e trasferimenti dati verificati sistematicamente"@it .
+
+# ============================================================================
+# CLAUSOLA 8: REQUISITI DEL SISTEMA DI GESTIONE - ESPANSIONE COMPLETA
+# ============================================================================
+
+iso17025:Clause8_ManagementSystemRequirements a owl:Class ;
+    rdfs:label "Clausola 8 - Requisiti del Sistema di Gestione"@it ;
+    rdfs:label "Clause 8 - Management System Requirements"@en ;
+    rdfs:subClassOf iso17025:CompetenceRequirement ;
+    rdfs:comment "Requisiti del sistema di gestione (Opzione A o Opzione B)"@it .
+
+## 8.1 Opzioni
+iso17025:ManagementSystemOptions a owl:Class ;
+    rdfs:label "Opzioni Sistema di Gestione"@it ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.1" .
+
+iso17025:GeneralManagementSystem a owl:Class ;
+    rdfs:label "Sistema di Gestione Generale"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemOptions ;
+    skos:notation "8.1.1" ;
+    rdfs:comment "Stabilire, documentare, attuare e mantenere un sistema di gestione"@it .
+
+iso17025:ManagementSystemOptionA a owl:Class ;
+    rdfs:label "Opzione A Sistema di Gestione"@it ;
+    rdfs:label "Management System Option A"@en ;
+    rdfs:subClassOf iso17025:ManagementSystemOptions ;
+    skos:notation "8.1.2" ;
+    rdfs:comment "Requisiti minimi per il sistema di gestione"@it .
+
+iso17025:ManagementSystemOptionB a owl:Class ;
+    rdfs:label "Opzione B Sistema di Gestione"@it ;
+    rdfs:label "Management System Option B"@en ;
+    rdfs:subClassOf iso17025:ManagementSystemOptions ;
+    skos:notation "8.1.3" ;
+    rdfs:comment "Sistema di gestione conforme ai requisiti della ISO 9001"@it .
+
+## 8.2 Documentazione del Sistema di Gestione (Opzione A)
+iso17025:ManagementSystemDocumentation a owl:Class ;
+    rdfs:label "Documentazione Sistema di Gestione"@it ;
+    rdfs:label "Management System Documentation"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.2" .
+
+iso17025:PoliciesAndObjectives a owl:Class ;
+    rdfs:label "Politiche e Obiettivi"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.1" ;
+    rdfs:comment "Stabilire, documentare e mantenere politiche e obiettivi"@it .
+
+iso17025:CompetenceImparzialityOperation a owl:Class ;
+    rdfs:label "Competenza Imparzialità Funzionamento"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.2" ;
+    rdfs:comment "Politiche e obiettivi devono riguardare competenza, imparzialità e funzionamento"@it .
+
+iso17025:ManagementCommitment a owl:Class ;
+    rdfs:label "Impegno della Direzione"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.3" ;
+    rdfs:comment "Evidenza dell'impegno relativo allo sviluppo e attuazione"@it .
+
+iso17025:SystemDocumentationScope a owl:Class ;
+    rdfs:label "Campo Documentazione Sistema"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.4" ;
+    rdfs:comment "Sistema deve comprendere tutti i documenti e processi"@it .
+
+iso17025:DocumentationAccess a owl:Class ;
+    rdfs:label "Accesso Documentazione"@it ;
+    rdfs:subClassOf iso17025:ManagementSystemDocumentation ;
+    skos:notation "8.2.5" ;
+    rdfs:comment "Personale deve avere accesso alla documentazione applicabile"@it .
+
+## 8.3 Controllo dei Documenti del Sistema di Gestione (Opzione A)
+iso17025:DocumentControl a owl:Class ;
+    rdfs:label "Controllo Documenti"@it ;
+    rdfs:label "Control of Management System Documents"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.3" .
+
+iso17025:DocumentTypes a owl:Class ;
+    rdfs:label "Tipi di Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.1" ;
+    rdfs:comment "Controllo documenti interni ed esterni"@it .
+
+iso17025:DocumentApproval a owl:Class ;
+    rdfs:label "Approvazione Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.a" ;
+    rdfs:comment "Documenti approvati per adeguatezza prima dell'emissione"@it .
+
+iso17025:DocumentReview a owl:Class ;
+    rdfs:label "Riesame Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.b" ;
+    rdfs:comment "Documenti periodicamente riesaminati e aggiornati"@it .
+
+iso17025:DocumentChanges a owl:Class ;
+    rdfs:label "Modifiche Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.c" ;
+    rdfs:comment "Identificare modifiche e stato di revisione corrente"@it .
+
+iso17025:DocumentAvailability a owl:Class ;
+    rdfs:label "Disponibilità Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.d" ;
+    rdfs:comment "Versioni pertinenti disponibili nei punti di utilizzo"@it .
+
+iso17025:DocumentIdentification a owl:Class ;
+    rdfs:label "Identificazione Documenti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.e" ;
+    rdfs:comment "Documenti identificati in modo univoco"@it .
+
+iso17025:ObsoleteDocumentControl a owl:Class ;
+    rdfs:label "Controllo Documenti Obsoleti"@it ;
+    rdfs:subClassOf iso17025:DocumentControl ;
+    skos:notation "8.3.2.f" ;
+    rdfs:comment "Impedito utilizzo non intenzionale di documenti obsoleti"@it .
+
+## 8.4 Controllo delle Registrazioni (Opzione A)
+iso17025:RecordControl a owl:Class ;
+    rdfs:label "Controllo Registrazioni"@it ;
+    rdfs:label "Control of Records"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.4" .
+
+iso17025:RecordProduction a owl:Class ;
+    rdfs:label "Produzione Registrazioni"@it ;
+    rdfs:subClassOf iso17025:RecordControl ;
+    skos:notation "8.4.1" ;
+    rdfs:comment "Produrre e conservare registrazioni leggibili"@it .
+
+iso17025:RecordManagement a owl:Class ;
+    rdfs:label "Gestione Registrazioni"@it ;
+    rdfs:subClassOf iso17025:RecordControl ;
+    skos:notation "8.4.2" ;
+    rdfs:comment "Controllo identificazione, conservazione, protezione, back-up"@it .
+
+iso17025:RecordRetention a owl:Class ;
+    rdfs:label "Conservazione Registrazioni"@it ;
+    rdfs:subClassOf iso17025:RecordManagement ;
+    rdfs:comment "Tempo di conservazione coerente con obblighi contrattuali"@it .
+
+iso17025:RecordAccessibility a owl:Class ;
+    rdfs:label "Accessibilità Registrazioni"@it ;
+    rdfs:subClassOf iso17025:RecordManagement ;
+    rdfs:comment "Registrazioni prontamente disponibili"@it .
+
+## 8.5 Azioni per Affrontare Rischi e Opportunità (Opzione A)
+iso17025:RiskManagement a owl:Class ;
+    rdfs:label "Gestione Rischi e Opportunità"@it ;
+    rdfs:label "Actions to Address Risks and Opportunities"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.5" .
+
+iso17025:RiskConsideration a owl:Class ;
+    rdfs:label "Considerazione Rischi"@it ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    skos:notation "8.5.1" ;
+    rdfs:comment "Prendere in considerazione rischi e opportunità"@it .
+
+iso17025:EnsureIntendedResults a owl:Class ;
+    rdfs:label "Assicurare Risultati Previsti"@it ;
+    rdfs:subClassOf iso17025:RiskConsideration ;
+    skos:notation "8.5.1.a" .
+
+iso17025:EnhanceOpportunities a owl:Class ;
+    rdfs:label "Accrescere Opportunità"@it ;
+    rdfs:subClassOf iso17025:RiskConsideration ;
+    skos:notation "8.5.1.b" .
+
+iso17025:PreventUndesiredImpacts a owl:Class ;
+    rdfs:label "Prevenire Impatti Indesiderati"@it ;
+    rdfs:subClassOf iso17025:RiskConsideration ;
+    skos:notation "8.5.1.c" .
+
+iso17025:AchieveImprovement a owl:Class ;
+    rdfs:label "Conseguire Miglioramento"@it ;
+    rdfs:subClassOf iso17025:RiskConsideration ;
+    skos:notation "8.5.1.d" .
+
+iso17025:RiskActionPlanning a owl:Class ;
+    rdfs:label "Pianificazione Azioni Rischio"@it ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    skos:notation "8.5.2" ;
+    rdfs:comment "Pianificare azioni per affrontare rischi e opportunità"@it .
+
+iso17025:RiskActionProportionality a owl:Class ;
+    rdfs:label "Proporzionalità Azioni Rischio"@it ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    skos:notation "8.5.3" ;
+    rdfs:comment "Azioni proporzionate ai potenziali impatti"@it .
+
+iso17025:Risk a owl:Class ;
+    rdfs:label "Rischio"@it ;
+    rdfs:label "Risk"@en ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    rdfs:comment "Rischio identificato per le attività del laboratorio"@it .
+
+iso17025:Opportunity a owl:Class ;
+    rdfs:label "Opportunità"@it ;
+    rdfs:label "Opportunity"@en ;
+    rdfs:subClassOf iso17025:RiskManagement ;
+    rdfs:comment "Opportunità identificata per il miglioramento"@it .
+
+## 8.6 Miglioramento (Opzione A)
+iso17025:Improvement a owl:Class ;
+    rdfs:label "Miglioramento"@it ;
+    rdfs:label "Improvement"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.6" .
+
+iso17025:ImprovementOpportunityIdentification a owl:Class ;
+    rdfs:label "Identificazione Opportunità Miglioramento"@it ;
+    rdfs:subClassOf iso17025:Improvement ;
+    skos:notation "8.6.1" ;
+    rdfs:comment "Identificare e selezionare opportunità di miglioramento"@it .
+
+iso17025:CustomerFeedback a owl:Class ;
+    rdfs:label "Feedback Cliente"@it ;
+    rdfs:subClassOf iso17025:Improvement ;
+    skos:notation "8.6.2" ;
+    rdfs:comment "Cercare informazioni di ritorno dai clienti"@it .
+
+iso17025:FeedbackAnalysis a owl:Class ;
+    rdfs:label "Analisi Feedback"@it ;
+    rdfs:subClassOf iso17025:CustomerFeedback ;
+    rdfs:comment "Analizzare e utilizzare feedback per migliorare"@it .
+
+## 8.7 Azioni Correttive (Opzione A)
+iso17025:CorrectiveAction a owl:Class ;
+    rdfs:label "Azioni Correttive"@it ;
+    rdfs:label "Corrective Actions"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.7" .
+
+iso17025:NonconformityReaction a owl:Class ;
+    rdfs:label "Reazione a Non Conformità"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.a" ;
+    rdfs:comment "Reagire alla non conformità e affrontarne le conseguenze"@it .
+
+iso17025:CauseEvaluation a owl:Class ;
+    rdfs:label "Valutazione Cause"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.b" ;
+    rdfs:comment "Valutare esigenza di azioni per eliminare le cause"@it .
+
+iso17025:RootCauseAnalysis a owl:Class ;
+    rdfs:label "Analisi Causa Radice"@it ;
+    rdfs:label "Root Cause Analysis"@en ;
+    rdfs:subClassOf iso17025:CauseEvaluation ;
+    rdfs:comment "Determinare le cause della non conformità"@it .
+
+iso17025:ActionImplementation a owl:Class ;
+    rdfs:label "Attuazione Azioni"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.c" ;
+    rdfs:comment "Attuare ogni azione necessaria"@it .
+
+iso17025:EffectivenessReview a owl:Class ;
+    rdfs:label "Riesame Efficacia"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.d" ;
+    rdfs:comment "Riesaminare l'efficacia di ogni azione correttiva"@it .
+
+iso17025:RiskUpdate a owl:Class ;
+    rdfs:label "Aggiornamento Rischi"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.e" ;
+    rdfs:comment "Aggiornare rischi e opportunità se necessario"@it .
+
+iso17025:SystemModification a owl:Class ;
+    rdfs:label "Modifica Sistema"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.1.f" ;
+    rdfs:comment "Effettuare modifiche al sistema di gestione se necessario"@it .
+
+iso17025:ActionProportionality a owl:Class ;
+    rdfs:label "Proporzionalità Azioni"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.2" ;
+    rdfs:comment "Azioni correttive adeguate agli effetti delle non conformità"@it .
+
+iso17025:CorrectiveActionRecords a owl:Class ;
+    rdfs:label "Registrazioni Azioni Correttive"@it ;
+    rdfs:subClassOf iso17025:CorrectiveAction ;
+    skos:notation "8.7.3" ;
+    rdfs:comment "Conservare registrazioni delle non conformità e azioni"@it .
+
+## 8.8 Audit Interni (Opzione A)
+iso17025:InternalAudit a owl:Class ;
+    rdfs:label "Audit Interni"@it ;
+    rdfs:label "Internal Audits"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.8" .
+
+iso17025:AuditPurpose a owl:Class ;
+    rdfs:label "Scopo Audit"@it ;
+    rdfs:subClassOf iso17025:InternalAudit ;
+    skos:notation "8.8.1" ;
+    rdfs:comment "Condurre audit interni a intervalli pianificati"@it .
+
+iso17025:AuditConformity a owl:Class ;
+    rdfs:label "Conformità Audit"@it ;
+    rdfs:subClassOf iso17025:AuditPurpose ;
+    skos:notation "8.8.1.a" ;
+    rdfs:comment "Verificare conformità ai requisiti"@it .
+
+iso17025:AuditImplementation a owl:Class ;
+    rdfs:label "Attuazione Audit"@it ;
+    rdfs:subClassOf iso17025:AuditPurpose ;
+    skos:notation "8.8.1.b" ;
+    rdfs:comment "Verificare efficace attuazione e mantenimento"@it .
+
+iso17025:AuditProgram a owl:Class ;
+    rdfs:label "Programma di Audit"@it ;
+    rdfs:label "Audit Program"@en ;
+    rdfs:subClassOf iso17025:InternalAudit ;
+    skos:notation "8.8.2" .
+
+iso17025:AuditPlanning a owl:Class ;
+    rdfs:label "Pianificazione Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.a" ;
+    rdfs:comment "Pianificare programma comprensivo di frequenza e metodi"@it .
+
+iso17025:AuditCriteria a owl:Class ;
+    rdfs:label "Criteri Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.b" ;
+    rdfs:comment "Definire criteri e campo di applicazione per ciascun audit"@it .
+
+iso17025:AuditReporting a owl:Class ;
+    rdfs:label "Reporting Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.c" ;
+    rdfs:comment "Risultati riportati al pertinente livello direzionale"@it .
+
+iso17025:AuditCorrections a owl:Class ;
+    rdfs:label "Correzioni da Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.d" ;
+    rdfs:comment "Attuare correzioni e azioni correttive appropriate"@it .
+
+iso17025:AuditRecords a owl:Class ;
+    rdfs:label "Registrazioni Audit"@it ;
+    rdfs:subClassOf iso17025:AuditProgram ;
+    skos:notation "8.8.2.e" ;
+    rdfs:comment "Conservare registrazioni del programma e risultati audit"@it .
+
+## 8.9 Riesami di Direzione (Opzione A)
+iso17025:ManagementReview a owl:Class ;
+    rdfs:label "Riesami di Direzione"@it ;
+    rdfs:label "Management Reviews"@en ;
+    rdfs:subClassOf iso17025:Clause8_ManagementSystemRequirements ;
+    skos:notation "8.9" .
+
+iso17025:ReviewPurpose a owl:Class ;
+    rdfs:label "Scopo del Riesame"@it ;
+    rdfs:subClassOf iso17025:ManagementReview ;
+    skos:notation "8.9.1" ;
+    rdfs:comment "Riesaminare sistema per assicurarne idoneità, adeguatezza ed efficacia"@it .
+
+iso17025:ManagementReviewInput a owl:Class ;
+    rdfs:label "Input Riesame Direzione"@it ;
+    rdfs:label "Management Review Input"@en ;
+    rdfs:subClassOf iso17025:ManagementReview ;
+    skos:notation "8.9.2" ;
+    rdfs:comment "Gli input al riesame devono essere registrati"@it .
+
+iso17025:InternalExternalChanges a owl:Class ;
+    rdfs:label "Cambiamenti Interni ed Esterni"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.a" .
+
+iso17025:ObjectiveAchievement a owl:Class ;
+    rdfs:label "Raggiungimento Obiettivi"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.b" .
+
+iso17025:PolicyProcedureSuitability a owl:Class ;
+    rdfs:label "Idoneità Politiche e Procedure"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.c" .
+
+iso17025:PreviousActionStatus a owl:Class ;
+    rdfs:label "Stato Azioni Precedenti"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.d" .
+
+iso17025:RecentAudits a owl:Class ;
+    rdfs:label "Audit Recenti"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.e" .
+
+iso17025:ExternalEvaluations a owl:Class ;
+    rdfs:label "Valutazioni Esterne"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.g" .
+
+iso17025:WorkVolumeChanges a owl:Class ;
+    rdfs:label "Variazioni Volume Lavoro"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.h" .
+
+iso17025:CustomerPersonnelFeedback a owl:Class ;
+    rdfs:label "Feedback Cliente e Personale"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.i" .
+
+iso17025:ComplaintInput a owl:Class ;
+    rdfs:label "Reclami"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.j" .
+
+iso17025:ImprovementEffectiveness a owl:Class ;
+    rdfs:label "Efficacia Miglioramenti"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.k" .
+
+iso17025:ResourceAdequacy a owl:Class ;
+    rdfs:label "Adeguatezza Risorse"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.l" .
+
+iso17025:RiskIdentificationResults a owl:Class ;
+    rdfs:label "Risultati Identificazione Rischi"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.m" .
+
+iso17025:ValidityAssuranceOutcomes a owl:Class ;
+    rdfs:label "Esiti Assicurazione Validità"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.n" .
+
+iso17025:OtherRelevantFactors a owl:Class ;
+    rdfs:label "Altri Fattori Rilevanti"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewInput ;
+    skos:notation "8.9.2.o" .
+
+iso17025:ManagementReviewOutput a owl:Class ;
+    rdfs:label "Output Riesame Direzione"@it ;
+    rdfs:label "Management Review Output"@en ;
+    rdfs:subClassOf iso17025:ManagementReview ;
+    skos:notation "8.9.3" ;
+    rdfs:comment "Gli output del riesame devono comprendere decisioni e azioni"@it .
+
+iso17025:SystemEffectivenessOutput a owl:Class ;
+    rdfs:label "Efficacia Sistema"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewOutput ;
+    skos:notation "8.9.3.a" .
+
+iso17025:ActivityImprovement a owl:Class ;
+    rdfs:label "Miglioramento Attività"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewOutput ;
+    skos:notation "8.9.3.b" .
+
+iso17025:ResourceProvision a owl:Class ;
+    rdfs:label "Messa a Disposizione Risorse"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewOutput ;
+    skos:notation "8.9.3.c" .
+
+iso17025:ChangeNeed a owl:Class ;
+    rdfs:label "Esigenza di Modifica"@it ;
+    rdfs:subClassOf iso17025:ManagementReviewOutput ;
+    skos:notation "8.9.3.d" .

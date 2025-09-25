@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    <group id="FolderRepository" prefer="public" xml:base="">
+        <!-- Ontologie waDoker LIMS - Core -->
+        <uri name="http://wadoker.ai/ontology/lims-core" uri="../lims-core.ttl"/>
+        <uri name="http://wadoker.ai/ontology/genio" uri="genio.ttl"/>
+        <uri name="http://www.semanticweb.org/waDoker/ontologies/final_unified" uri="7_final_unified_ontology.ttl"/>
+        
+        <!-- Ontologie Governance e Compliance -->
+        <uri name="http://purl.org/atextor/ontology/cobit5" uri="1_cobit5.ttl"/>
+        <uri name="http://www.semanticweb.org/iso17025/ontology" uri="2_ISO17025_Completa.ttl"/>
+        
+        <!-- Ontologie di Supporto -->
+        <uri name="http://www.w3.org/ns/prov" uri="prov-o.ttl"/>
+        <uri name="http://www.w3.org/ns/sosa" uri="sosa.ttl"/>
+        <uri name="http://www.w3.org/2006/time" uri="time.ttl"/>
+        <uri name="http://www.w3.org/ns/org" uri="org.ttl"/>
+        <uri name="http://qudt.org/schema/qudt" uri="qudt-schema.ttl"/>
+    </group>
+</catalog>

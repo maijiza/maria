@@ -1,0 +1,78 @@
+@prefix : <http://www.semanticweb.org/waDoker/ontologies/risk#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.semanticweb.org/waDoker/ontologies/risk> rdf:type owl:Ontology .
+
+# #################################################################
+#    Classes
+# #################################################################
+
+# Classe principale per un Rischio generico
+:Risk rdf:type owl:Class ;
+    rdfs:label "Risk"@en ,
+               "Rischio"@it ;
+    rdfs:comment "An uncertain event or set of events that, should it occur, will have an effect on the achievement of objectives."@en .
+
+# Classe per un Controllo che mitiga un rischio
+:Control rdf:type owl:Class ;
+    rdfs:label "Control"@en ,
+               "Controllo"@it ;
+    rdfs:comment "A measure that is modifying risk."@en .
+
+# Classe per una Causa di un rischio
+:Cause rdf:type owl:Class ;
+    rdfs:label "Cause"@en ,
+               "Causa"@it ;
+    rdfs:comment "An event or condition that gives rise to a risk."@en .
+
+# Classe per un Impatto o conseguenza di un rischio
+:Impact rdf:type owl:Class ;
+    rdfs:label "Impact"@en ,
+               "Impatto"@it ;
+    rdfs:comment "The outcome of a risk, should it materialize."@en .
+
+# #################################################################
+#    Object Properties
+# #################################################################
+
+# Collega un rischio a una possibile causa
+:hasCause rdf:type owl:ObjectProperty ;
+    rdfs:domain :Risk ;
+    rdfs:range :Cause ;
+    rdfs:label "has cause"@en ,
+               "ha causa"@it .
+
+# Collega un rischio a un potenziale impatto
+:hasImpact rdf:type owl:ObjectProperty ;
+    rdfs:domain :Risk ;
+    rdfs:range :Impact ;
+    rdfs:label "has impact"@en ,
+               "ha impatto"@it .
+
+# Collega un controllo a un rischio che mitiga
+:mitigates rdf:type owl:ObjectProperty ;
+    rdfs:domain :Control ;
+    rdfs:range :Risk ;
+    rdfs:label "mitigates"@en ,
+               "mitiga"@it .
+
+# #################################################################
+#    Data Properties
+# #################################################################
+
+# Probabilità che il rischio si verifichi (es. un valore da 1 a 5)
+:probability rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Risk ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "probability"@en ,
+               "probabilità"@it .
+
+# Magnitudo dell'impatto (es. un valore da 1 a 5)
+:magnitude rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Impact ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "magnitude"@en ,
+               "magnitudo"@it .

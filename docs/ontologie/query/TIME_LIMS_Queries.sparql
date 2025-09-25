@@ -1,0 +1,314 @@
+# ============================================================================
+# TIME + LIMS SPARQL QUERIES - Query temporali per sistemi LIMS
+# ============================================================================
+# Data creazione: 2025-09-21
+# Autore: Genio AI Agent
+# Descrizione: Query SPARQL per gestione temporale in sistemi LIMS
+# Ontologie: W3C TIME + ISO 17025 + COBIT5
+# ============================================================================
+
+# Query 1: Concetti temporali base disponibili
+# Mostra tutti i concetti temporali caricati
+MATCH (temporal_entity)
+WHERE temporal_entity.uri CONTAINS 'time'
+RETURN temporal_entity.label as concetto_temporale,
+       temporal_entity.uri as uri,
+       temporal_entity.rdfs_comment as descrizione
+ORDER BY temporal_entity.label;
+
+# Query 2: Entità temporali per scadenze calibrazione
+# Identifica concetti utili per gestire scadenze strumenti
+MATCH (temporal)
+WHERE temporal.uri CONTAINS 'time' AND 
+      (temporal.label CONTAINS 'Temporal entity' OR
+       temporal.label CONTAINS 'instante' OR
+       temporal.label CONTAINS 'interval')
+RETURN temporal.label as tipo_temporale,
+       temporal.rdfs_comment as utilizzo_lims;
+
+# Query 3: Relazioni temporali per sequenze di processo
+# Mostra relazioni before/after per processi LIMS
+MATCH (temporal1)-[r]-(temporal2)
+WHERE temporal1.uri CONTAINS 'time' AND temporal2.uri CONTAINS 'time' AND
+      (type(r) = 'BEFORE' OR type(r) = 'AFTER' OR 
+       type(r) = 'DOMAIN' OR type(r) = 'RANGE')
+RETURN temporal1.label as da,
+       type(r) as relazione_temporale,
+       temporal2.label as a,
+       'Utile per sequenze di processo LIMS' as applicazione;
+
+# Query 4: Durate per shelf life campioni
+# Cerca concetti di durata per gestire validità campioni
+MATCH (duration_concept)
+WHERE duration_concept.uri CONTAINS 'time' AND
+      (duration_concept.label CONTAINS 'duración' OR
+       duration_concept.label CONTAINS 'Duration' OR
+       duration_concept.label CONTAINS 'tiene duración')
+RETURN duration_concept.label as concetto_durata,
+       duration_concept.uri as uri,
+       'Shelf life campioni, validità certificati' as uso_lims;
+
+# Query 5: Integrazione TIME + ISO 17025 - Clausole temporali
+# Connette concetti temporali con requisiti ISO che hanno aspetti temporali
+MATCH (iso_clause)
+WHERE iso_clause.uri CONTAINS 'iso17025' AND
+      (iso_clause.notation CONTAINS '7.1' OR  // Revisione contratti
+       iso_clause.notation CONTAINS '6.4' OR  // Attrezzature
+       iso_clause.notation CONTAINS '7.4' OR  // Manipolazione campioni
+       iso_clause.notation CONTAINS '8.7')    // Certificati
+WITH iso_clause
+MATCH (temporal)
+WHERE temporal.uri CONTAINS 'time'
+RETURN iso_clause.notation as clausola_iso,
+       iso_clause.label as requisito,
+       count(temporal) as concetti_temporali_disponibili,
+       'Scadenze, validità, periodicità' as applicazione_temporale;
+
+# Query 6: Integrazione TIME + COBIT5 - Processi ciclici
+# Identifica processi COBIT con aspetti temporali (monitoraggio, audit, review)
+MATCH (cobit_process)
+WHERE cobit_process.uri CONTAINS 'cobit5' AND
+      (cobit_process.label CONTAINS 'Monitor' OR
+       cobit_process.label CONTAINS 'Review' OR
+       cobit_process.label CONTAINS 'Audit' OR
+       cobit_process.label CONTAINS 'Assess')
+WITH cobit_process
+MATCH (temporal)
+WHERE temporal.uri CONTAINS 'time' AND
+      temporal.label CONTAINS 'interval'
+RETURN cobit_process.label as processo_cobit,
+       temporal.label as concetto_temporale,
+       'Audit periodici, revisioni cicliche' as applicazione_lims;
+
+# Query 7: Pianificazione calibrazioni - Scenario completo
+# Simula la pianificazione di calibrazioni strumenti
+MATCH (iso_equipment)
+WHERE iso_equipment.uri CONTAINS 'iso17025' AND
+      iso_equipment.label CONTAINS 'Equipment'
+WITH iso_equipment
+MATCH (temporal_interval)
+WHERE temporal_interval.uri CONTAINS 'time' AND
+      temporal_interval.label CONTAINS 'interval'
+RETURN iso_equipment.label as strumento,
+       temporal_interval.label as intervallo_calibrazione,
+       'Ogni 6 mesi, annuale, secondo uso' as frequenza_suggerita,
+       'Pianificazione automatica calibrazioni' as beneficio_lims;
+
+# Query 8: Gestione scadenze certificati
+# Modella la gestione delle scadenze dei certificati di prova
+MATCH (iso_certificate)
+WHERE iso_certificate.uri CONTAINS 'iso17025' AND
+      (iso_certificate.label CONTAINS 'Certificate' OR
+       iso_certificate.label CONTAINS 'Report')
+WITH iso_certificate
+MATCH (temporal_instant)
+WHERE temporal_instant.uri CONTAINS 'time' AND
+      temporal_instant.label CONTAINS 'instante'
+RETURN iso_certificate.label as documento,
+       temporal_instant.label as momento_scadenza,
+       'Data emissione + validità = scadenza' as calcolo,
+       'Alert automatici pre-scadenza' as funzionalità_lims;
+
+# Query 9: Audit trail temporale
+# Combina PROV-O con TIME per tracciabilità temporale
+MATCH (prov_activity)
+WHERE prov_activity.uri CONTAINS 'prov' AND
+      prov_activity.label CONTAINS 'Activity'
+WITH prov_activity
+MATCH (temporal_entity)
+WHERE temporal_entity.uri CONTAINS 'time' AND
+      temporal_entity.label CONTAINS 'Temporal entity'
+RETURN prov_activity.label as attivita,
+       temporal_entity.label as timestamp,
+       'Chi ha fatto cosa quando' as audit_trail,
+       'Tracciabilità completa LIMS' as conformità_iso;
+
+# Query 10: Intervalli di verifica intermedia
+# Gestisce le verifiche intermedie tra calibrazioni
+MATCH (iso_verification)
+WHERE iso_verification.uri CONTAINS 'iso17025' AND
+      iso_verification.label CONTAINS 'Verification'
+WITH iso_verification
+MATCH (time_interval)
+WHERE time_interval.uri CONTAINS 'time' AND
+      (time_interval.label CONTAINS 'interval' OR
+       time_interval.label CONTAINS 'propio')
+RETURN iso_verification.label as tipo_verifica,
+       time_interval.label as intervallo,
+       'Settimanale, mensile, trimestrale' as frequenze,
+       'Controllo deriva strumenti' as scopo_lims;
+
+# ============================================================================
+# QUERY AVANZATE PER AUTOMORFISMO TEMPORALE
+# ============================================================================
+
+# Query 11: Mappatura temporale COBIT ↔ ISO 17025
+# Identifica corrispondenze temporali tra processi COBIT e clausole ISO
+MATCH (cobit_monitor)
+WHERE cobit_monitor.uri CONTAINS 'cobit5' AND
+      cobit_monitor.label CONTAINS 'Monitor'
+WITH cobit_monitor
+MATCH (iso_monitoring)
+WHERE iso_monitoring.uri CONTAINS 'iso17025' AND
+      (iso_monitoring.label CONTAINS 'Monitor' OR
+       iso_monitoring.notation = '8.8')  // Monitoraggio validità risultati
+MATCH (temporal)
+WHERE temporal.uri CONTAINS 'time'
+RETURN cobit_monitor.label as processo_cobit,
+       iso_monitoring.label as clausola_iso,
+       count(temporal) as concetti_temporali,
+       'Automorfismo: monitoraggio continuo' as mappatura;
+
+# Query 12: Cicli di vita temporali
+# Modella i cicli di vita completi (campione → analisi → certificato)
+MATCH (iso_sample_handling)
+WHERE iso_sample_handling.uri CONTAINS 'iso17025' AND
+      iso_sample_handling.notation = '7.4'  // Manipolazione campioni
+WITH iso_sample_handling
+MATCH (temporal_sequence)
+WHERE temporal_sequence.uri CONTAINS 'time'
+RETURN iso_sample_handling.label as processo_campione,
+       temporal_sequence.label as sequenza_temporale,
+       'Ricevimento → Conservazione → Analisi → Smaltimento' as ciclo_vita,
+       'Gestione completa timeline campione' as valore_lims;
+
+# Query 13: Sincronizzazione temporale multi-dominio
+# Coordina scadenze tra domini diversi (calibrazioni + audit + certificati)
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:manageDomain]->(domain)
+WITH domain
+MATCH (temporal_coordination)
+WHERE temporal_coordination.uri CONTAINS 'time'
+RETURN domain.label as dominio_gestito,
+       temporal_coordination.label as coordinamento,
+       'Calendario unificato LIMS' as risultato,
+       'Evita conflitti, ottimizza risorse' as beneficio;
+
+# ============================================================================
+# QUERY DI MONITORAGGIO TEMPORALE
+# ============================================================================
+
+# Query 14: Salute sistema temporale
+# Verifica che tutti i componenti temporali siano operativi
+MATCH (time_nodes)
+WHERE time_nodes.uri CONTAINS 'time'
+WITH count(time_nodes) as total_time_nodes
+MATCH (iso_nodes)
+WHERE iso_nodes.uri CONTAINS 'iso17025'
+WITH total_time_nodes, count(iso_nodes) as total_iso_nodes
+MATCH (cobit_nodes)
+WHERE cobit_nodes.uri CONTAINS 'cobit5'
+RETURN total_time_nodes as nodi_temporali,
+       total_iso_nodes as nodi_iso,
+       total_cobit_nodes as nodi_cobit,
+       total_time_nodes > 50 as sistema_temporale_ok,
+       'Sistema pronto per gestione temporale LIMS' as stato;
+
+# Query 15: Copertura temporale per domini
+# Verifica che ogni dominio abbia accesso ai concetti temporali necessari
+MATCH (domain_concept)
+WHERE domain_concept.uri CONTAINS 'iso17025' OR 
+      domain_concept.uri CONTAINS 'cobit5' OR
+      domain_concept.uri CONTAINS 'genio'
+WITH domain_concept.uri as domain_uri, count(domain_concept) as domain_count
+MATCH (time_concept)
+WHERE time_concept.uri CONTAINS 'time'
+WITH domain_uri, domain_count, count(time_concept) as time_count
+RETURN domain_uri,
+       domain_count as concetti_dominio,
+       time_count as concetti_temporali,
+       toFloat(time_count) / toFloat(domain_count) as rapporto_temporale,
+       'Copertura temporale per dominio' as metrica;
+
+# ============================================================================
+# QUERY APPLICATIVE SPECIFICHE LIMS
+# ============================================================================
+
+# Query 16: Dashboard scadenze imminenti (simulazione)
+# Simula una query per dashboard di scadenze
+MATCH (iso_requirement)
+WHERE iso_requirement.uri CONTAINS 'iso17025' AND
+      (iso_requirement.notation CONTAINS '6.4' OR  // Attrezzature
+       iso_requirement.notation CONTAINS '6.5')    // Metrological traceability
+WITH iso_requirement
+MATCH (temporal_instant)
+WHERE temporal_instant.uri CONTAINS 'time' AND
+      temporal_instant.label CONTAINS 'instante'
+RETURN iso_requirement.notation as requisito,
+       iso_requirement.label as descrizione,
+       temporal_instant.label as scadenza_tipo,
+       'Prossimi 30 giorni' as filtro_temporale,
+       'Dashboard scadenze LIMS' as interfaccia;
+
+# Query 17: Ottimizzazione planning risorse
+# Identifica sovrapposizioni temporali per ottimizzare risorse
+MATCH (cobit_resource)
+WHERE cobit_resource.uri CONTAINS 'cobit5' AND
+      cobit_resource.label CONTAINS 'Resource'
+WITH cobit_resource
+MATCH (time_interval)
+WHERE time_interval.uri CONTAINS 'time' AND
+      time_interval.label CONTAINS 'interval'
+RETURN cobit_resource.label as risorsa,
+       time_interval.label as periodo_utilizzo,
+       'Evita conflitti calibrazioni simultanee' as ottimizzazione,
+       'Planning intelligente LIMS' as risultato;
+
+# Query 18: Conformità temporale audit
+# Verifica conformità ai requisiti temporali per audit
+MATCH (iso_audit_req)
+WHERE iso_audit_req.uri CONTAINS 'iso17025' AND
+      iso_audit_req.notation = '8.8'  // Internal audits
+WITH iso_audit_req
+MATCH (temporal_period)
+WHERE temporal_period.uri CONTAINS 'time'
+RETURN iso_audit_req.label as requisito_audit,
+       temporal_period.label as periodicità,
+       'Audit interni almeno annuali' as conformità,
+       'Tracking automatico compliance' as controllo_lims;
+
+# Query 19: Previsioni temporali ML-ready
+# Prepara dati per machine learning su pattern temporali
+MATCH (all_temporal_relations)
+WHERE all_temporal_relations.uri CONTAINS 'time' OR
+      all_temporal_relations.uri CONTAINS 'iso17025' OR
+      all_temporal_relations.uri CONTAINS 'cobit5'
+RETURN all_temporal_relations.label as entità,
+       all_temporal_relations.uri as uri,
+       'Feature per ML temporale' as preparazione,
+       'Predizioni scadenze, anomalie temporali' as ai_lims;
+
+# Query 20: Report integrazione temporale completa
+# Riepilogo completo dell'integrazione temporale
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+WITH genio
+MATCH (time_integration)
+WHERE time_integration.uri CONTAINS 'time' OR
+      time_integration.uri CONTAINS 'iso17025' OR
+      time_integration.uri CONTAINS 'cobit5' OR
+      time_integration.uri CONTAINS 'genio'
+RETURN count(time_integration) as entità_integrate,
+       'Gestione temporale completa LIMS' as capacità,
+       'Scadenze, audit, calibrazioni, certificati' as funzionalità,
+       '166.524+ triple temporalmente consapevoli' as knowledge_base;
+
+# ============================================================================
+# NOTE IMPLEMENTATIVE
+# ============================================================================
+
+# IMPORTANTE: L'ontologia W3C TIME usa etichette multilingue (spagnolo/inglese)
+# Le query sono progettate per funzionare con entrambe le lingue
+# 
+# Concetti chiave disponibili:
+# - "Temporal entity" (entità temporale base)
+# - "instante de tiempo" (istanti temporali)
+# - "intervalo propio" (intervalli temporali)
+# - "duración temporal" (durate)
+#
+# Per implementazione LIMS:
+# 1. Creare wrapper in italiano per i concetti TIME
+# 2. Definire template temporali per casi d'uso specifici
+# 3. Integrare con sistema di notifiche per scadenze
+# 4. Implementare dashboard temporale
+
+# Ultimo aggiornamento: 2025-09-21T11:20:00Z
+# Versione query: 1.0.0

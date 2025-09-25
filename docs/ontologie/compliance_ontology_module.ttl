@@ -1,0 +1,75 @@
+@prefix : <http://www.semanticweb.org/waDoker/ontologies/compliance#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<http://www.semanticweb.org/waDoker/ontologies/compliance> rdf:type owl:Ontology .
+
+# #################################################################
+#    Classes
+# #################################################################
+
+# Classe per una Norma o un documento normativo (es. ISO 17025)
+:Norm rdf:type owl:Class ;
+    rdfs:label "Norm"@en ,
+               "Norma"@it ;
+    rdfs:comment "A legal or regulatory document, such as a standard or a law."@en .
+
+# Classe per una Regola specifica all'interno di una norma (es. una clausola)
+:Rule rdf:type owl:Class ;
+    rdfs:subClassOf dcterms:BibliographicResource ;
+    rdfs:label "Rule"@en ,
+               "Regola"@it ;
+    rdfs:comment "A specific provision, article, or clause within a norm."@en .
+
+# Classe per un Obbligo imposto da una regola
+:Obligation rdf:type owl:Class ;
+    rdfs:label "Obligation"@en ,
+               "Obbligo"@it ;
+    rdfs:comment "A course of action that is legally or contractually required."@en .
+
+# Classe per un Permesso concesso da una regola
+:Permission rdf:type owl:Class ;
+    rdfs:label "Permission"@en ,
+               "Permesso"@it ;
+    rdfs:comment "A course of action that is allowed by a rule."@en .
+
+# #################################################################
+#    Object Properties
+# #################################################################
+
+# Collega una norma alle regole che contiene
+:hasRule rdf:type owl:ObjectProperty ;
+    rdfs:domain :Norm ;
+    rdfs:range :Rule ;
+    rdfs:label "has rule"@en ,
+               "contiene regola"@it .
+
+# Collega una regola all'obbligo che impone
+:imposes rdf:type owl:ObjectProperty ;
+    rdfs:domain :Rule ;
+    rdfs:range :Obligation ;
+    rdfs:label "imposes"@en ,
+               "impone"@it .
+
+# Collega una regola al permesso che concede
+:grants rdf:type owl:ObjectProperty ;
+    rdfs:domain :Rule ;
+    rdfs:range :Permission ;
+    rdfs:label "grants"@en ,
+               "concede"@it .
+
+# Collega un obbligo all'agente che deve adempiere
+:appliesTo rdf:type owl:ObjectProperty ;
+    rdfs:domain :Obligation ;
+    owl:inverseOf :isBoundBy ;
+    rdfs:label "applies to"@en ,
+               "si applica a"@it .
+
+# Proprietà inversa di appliesTo
+:isBoundBy rdf:type owl:ObjectProperty ;
+    rdfs:range :Obligation ;
+    rdfs:label "is bound by"@en ,
+               "è vincolato da"@it .

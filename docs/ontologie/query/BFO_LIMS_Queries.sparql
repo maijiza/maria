@@ -1,0 +1,297 @@
+# ============================================================================
+# BFO + LIMS SPARQL QUERIES - Query per ragionamento logico avanzato
+# ============================================================================
+# Data creazione: 2025-09-21
+# Autore: Genio AI Agent
+# Descrizione: Query SPARQL per sfruttare Basic Formal Ontology in sistemi LIMS
+# Ontologie: BFO + ISO 17025 + COBIT5 + TIME + GENIO
+# ============================================================================
+
+# Query 1: Gerarchia ontologica BFO
+# Mostra la struttura fondamentale di BFO caricata
+MATCH (bfo_entity)
+WHERE bfo_entity.uri CONTAINS 'obo/BFO'
+RETURN bfo_entity.label as concetto_bfo,
+       bfo_entity.uri as uri,
+       bfo_entity.rdfs_comment as definizione
+ORDER BY bfo_entity.label;
+
+# Query 2: Entità vs Continuanti vs Occorrenti
+# Distinzione fondamentale BFO per modellazione LIMS
+MATCH (entity)
+WHERE entity.uri CONTAINS 'obo/BFO' AND
+      (entity.label CONTAINS 'entity' OR
+       entity.label CONTAINS 'continuant' OR
+       entity.label CONTAINS 'occurrent')
+RETURN entity.label as tipo_fondamentale,
+       entity.uri as uri,
+       'Modellazione robusta oggetti LIMS' as applicazione;
+
+# Query 3: Processi (Occorrenti) per workflow LIMS
+# Identifica concetti BFO per processi di laboratorio
+MATCH (process_concept)
+WHERE process_concept.uri CONTAINS 'obo/BFO' AND
+      (process_concept.label CONTAINS 'process' OR
+       process_concept.label CONTAINS 'occurrent' OR
+       process_concept.label CONTAINS 'history')
+RETURN process_concept.label as concetto_processo,
+       process_concept.uri as uri,
+       'Workflow calibrazione, analisi, audit' as uso_lims;
+
+# Query 4: Qualità e Disposizioni per caratteristiche strumenti
+# Modella proprietà degli strumenti di misura
+MATCH (quality_concept)
+WHERE quality_concept.uri CONTAINS 'obo/BFO' AND
+      (quality_concept.label CONTAINS 'quality' OR
+       quality_concept.label CONTAINS 'disposition' OR
+       quality_concept.label CONTAINS 'function')
+RETURN quality_concept.label as caratteristica,
+       quality_concept.uri as uri,
+       'Precisione, accuratezza, deriva strumenti' as proprietà_lims;
+
+# Query 5: Integrazione BFO + ISO 17025 - Oggetti fisici
+# Connette concetti BFO con attrezzature ISO 17025
+MATCH (iso_equipment)
+WHERE iso_equipment.uri CONTAINS 'iso17025' AND
+      (iso_equipment.label CONTAINS 'Equipment' OR
+       iso_equipment.notation = '6.4')
+WITH iso_equipment
+MATCH (bfo_object)
+WHERE bfo_object.uri CONTAINS 'obo/BFO' AND
+      (bfo_object.label CONTAINS 'object' OR
+       bfo_object.label CONTAINS 'continuant')
+RETURN iso_equipment.label as requisito_iso,
+       bfo_object.label as modello_bfo,
+       'Strumenti come continuanti materiali' as modellazione;
+
+# Query 6: Integrazione BFO + COBIT5 - Processi aziendali
+# Modella processi COBIT come occorrenti BFO
+MATCH (cobit_process)
+WHERE cobit_process.uri CONTAINS 'cobit5' AND
+      cobit_process.label CONTAINS 'Process'
+WITH cobit_process
+MATCH (bfo_process)
+WHERE bfo_process.uri CONTAINS 'obo/BFO' AND
+      bfo_process.label CONTAINS 'process'
+RETURN cobit_process.label as processo_cobit,
+       bfo_process.label as modello_bfo,
+       'Processi governance come occorrenti' as struttura_logica;
+
+# Query 7: Integrazione BFO + TIME - Eventi temporali
+# Combina struttura temporale con ontologia formale
+MATCH (time_concept)
+WHERE time_concept.uri CONTAINS 'time' AND
+      time_concept.label CONTAINS 'Temporal entity'
+WITH time_concept
+MATCH (bfo_temporal)
+WHERE bfo_temporal.uri CONTAINS 'obo/BFO' AND
+      (bfo_temporal.label CONTAINS 'occurrent' OR
+       bfo_temporal.label CONTAINS 'history')
+RETURN time_concept.label as entità_temporale,
+       bfo_temporal.label as struttura_bfo,
+       'Eventi LIMS con struttura logica robusta' as integrazione;
+
+# Query 8: Integrazione BFO + GENIO - Agente come continuante
+# Modella Genio stesso secondo BFO
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+WITH genio
+MATCH (bfo_continuant)
+WHERE bfo_continuant.uri CONTAINS 'obo/BFO' AND
+      bfo_continuant.label CONTAINS 'continuant'
+RETURN genio.label as agente_ai,
+       bfo_continuant.label as modello_ontologico,
+       'Genio come continuante immateriale' as classificazione_bfo;
+
+# Query 9: Campioni come oggetti materiali
+# Modellazione BFO dei campioni di laboratorio
+MATCH (iso_sample)
+WHERE iso_sample.uri CONTAINS 'iso17025' AND
+      (iso_sample.label CONTAINS 'Sample' OR
+       iso_sample.notation = '7.4')
+WITH iso_sample
+MATCH (bfo_material)
+WHERE bfo_material.uri CONTAINS 'obo/BFO' AND
+      (bfo_material.label CONTAINS 'material' OR
+       bfo_material.label CONTAINS 'object')
+RETURN iso_sample.label as gestione_campioni,
+       bfo_material.label as entità_materiale,
+       'Campioni come oggetti materiali identificabili' as modello_lims;
+
+# Query 10: Certificati come entità informazionali
+# Modella certificati e report secondo BFO
+MATCH (iso_certificate)
+WHERE iso_certificate.uri CONTAINS 'iso17025' AND
+      (iso_certificate.label CONTAINS 'Certificate' OR
+       iso_certificate.label CONTAINS 'Report')
+WITH iso_certificate
+MATCH (bfo_information)
+WHERE bfo_information.uri CONTAINS 'obo/BFO' AND
+      bfo_information.label CONTAINS 'generically dependent continuant'
+RETURN iso_certificate.label as documento,
+       bfo_information.label as entità_informazionale,
+       'Certificati come continuanti dipendenti' as struttura_logica;
+
+# ============================================================================
+# QUERY AVANZATE PER RAGIONAMENTO ONTOLOGICO
+# ============================================================================
+
+# Query 11: Gerarchia di specializzazione BFO
+# Mostra relazioni gerarchiche tra concetti BFO
+MATCH (parent_bfo)-[r]-(child_bfo)
+WHERE parent_bfo.uri CONTAINS 'obo/BFO' AND 
+      child_bfo.uri CONTAINS 'obo/BFO' AND
+      (type(r) = 'SUBCLASSOF' OR type(r) = 'ISA')
+RETURN parent_bfo.label as concetto_padre,
+       type(r) as relazione,
+       child_bfo.label as concetto_figlio,
+       'Gerarchia ontologica per ragionamento' as utilizzo;
+
+# Query 12: Validazione coerenza ontologica
+# Verifica che le entità siano classificate correttamente
+MATCH (lims_entity)
+WHERE lims_entity.uri CONTAINS 'iso17025' OR 
+      lims_entity.uri CONTAINS 'cobit5' OR
+      lims_entity.uri CONTAINS 'genio'
+WITH lims_entity
+MATCH (bfo_category)
+WHERE bfo_category.uri CONTAINS 'obo/BFO'
+RETURN lims_entity.label as entità_lims,
+       count(bfo_category) as categorie_bfo_disponibili,
+       'Classificazione ontologica sistematica' as beneficio;
+
+# Query 13: Pattern di composizione BFO
+# Identifica relazioni parte-tutto per LIMS
+MATCH (bfo_part)
+WHERE bfo_part.uri CONTAINS 'obo/BFO' AND
+      bfo_part.label CONTAINS 'part'
+RETURN bfo_part.label as concetto_parte,
+       bfo_part.uri as uri,
+       'Componenti strumenti, parti di processo' as applicazione_lims;
+
+# Query 14: Funzioni e Ruoli BFO
+# Modella ruoli del personale e funzioni strumenti
+MATCH (bfo_role)
+WHERE bfo_role.uri CONTAINS 'obo/BFO' AND
+      (bfo_role.label CONTAINS 'function' OR
+       bfo_role.label CONTAINS 'role')
+RETURN bfo_role.label as concetto_funzionale,
+       bfo_role.uri as uri,
+       'Ruoli personale, funzioni strumentali' as modellazione_lims;
+
+# Query 15: Integrazione multi-ontologica con BFO
+# Verifica l'integrazione di tutte le ontologie tramite BFO
+MATCH (all_concepts)
+WHERE all_concepts.uri CONTAINS 'obo/BFO' OR
+      all_concepts.uri CONTAINS 'iso17025' OR
+      all_concepts.uri CONTAINS 'cobit5' OR
+      all_concepts.uri CONTAINS 'time' OR
+      all_concepts.uri CONTAINS 'genio'
+WITH all_concepts.uri as domain_uri, count(all_concepts) as concept_count
+RETURN domain_uri,
+       concept_count,
+       'Integrazione ontologica completa' as risultato
+ORDER BY concept_count DESC;
+
+# ============================================================================
+# QUERY PER AUTOMORFISMO ONTOLOGICO AVANZATO
+# ============================================================================
+
+# Query 16: Mappatura COBIT-ISO via BFO
+# Usa BFO come ponte ontologico tra domini
+MATCH (cobit_concept)
+WHERE cobit_concept.uri CONTAINS 'cobit5'
+WITH cobit_concept
+MATCH (iso_concept)
+WHERE iso_concept.uri CONTAINS 'iso17025'
+WITH cobit_concept, iso_concept
+MATCH (bfo_bridge)
+WHERE bfo_bridge.uri CONTAINS 'obo/BFO'
+RETURN cobit_concept.label as processo_cobit,
+       iso_concept.label as requisito_iso,
+       bfo_bridge.label as ponte_ontologico,
+       'Automorfismo via struttura BFO' as metodologia;
+
+# Query 17: Ragionamento transitivo BFO
+# Sfrutta la struttura gerarchica per inferenze
+MATCH (specific_concept)
+WHERE specific_concept.uri CONTAINS 'iso17025' OR
+      specific_concept.uri CONTAINS 'cobit5'
+WITH specific_concept
+MATCH (bfo_general)
+WHERE bfo_general.uri CONTAINS 'obo/BFO' AND
+      bfo_general.label = 'entity'
+RETURN specific_concept.label as concetto_specifico,
+       bfo_general.label as categoria_generale,
+       'Tutto è entità BFO' as inferenza_logica;
+
+# Query 18: Composizione temporale + BFO
+# Combina struttura temporale con ontologia formale
+MATCH (time_instant)
+WHERE time_instant.uri CONTAINS 'time' AND
+      time_instant.label CONTAINS 'instante'
+WITH time_instant
+MATCH (bfo_occurrent)
+WHERE bfo_occurrent.uri CONTAINS 'obo/BFO' AND
+      bfo_occurrent.label CONTAINS 'occurrent'
+RETURN time_instant.label as momento_temporale,
+       bfo_occurrent.label as evento_bfo,
+       'Eventi temporali strutturati ontologicamente' as modello_avanzato;
+
+# ============================================================================
+# QUERY DI VALIDAZIONE E MONITORAGGIO BFO
+# ============================================================================
+
+# Query 19: Salute sistema BFO
+# Verifica che BFO sia completamente integrato
+MATCH (bfo_nodes)
+WHERE bfo_nodes.uri CONTAINS 'obo/BFO'
+WITH count(bfo_nodes) as total_bfo
+MATCH (all_nodes)
+RETURN total_bfo as nodi_bfo,
+       count(all_nodes) as nodi_totali,
+       toFloat(total_bfo) / toFloat(count(all_nodes)) * 100 as percentuale_bfo,
+       total_bfo >= 30 as bfo_sufficiente,
+       'Copertura BFO del knowledge graph' as metrica;
+
+# Query 20: Report integrazione BFO completa
+# Riepilogo dell'impatto di BFO sul sistema
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+WITH genio
+MATCH (enhanced_system)
+WHERE enhanced_system.uri CONTAINS 'obo/BFO' OR
+      enhanced_system.uri CONTAINS 'iso17025' OR
+      enhanced_system.uri CONTAINS 'cobit5' OR
+      enhanced_system.uri CONTAINS 'time' OR
+      enhanced_system.uri CONTAINS 'genio'
+RETURN count(enhanced_system) as entità_totali,
+       'Ragionamento logico avanzato abilitato' as capacità,
+       'Modellazione robusta, coerenza ontologica' as benefici,
+       'Sistema LIMS ontologicamente fondato' as risultato_finale;
+
+# ============================================================================
+# NOTE IMPLEMENTATIVE BFO
+# ============================================================================
+
+# IMPORTANTE: BFO fornisce la struttura logica fondamentale
+# 
+# Concetti chiave BFO disponibili:
+# - "entity" (radice ontologica)
+# - "continuant" (oggetti, qualità, che persistono nel tempo)
+# - "occurrent" (processi, eventi, che accadono nel tempo)
+# - "disposition" (capacità, tendenze)
+# - "function" (ruoli funzionali)
+#
+# Benefici per LIMS:
+# 1. Modellazione rigorosa di oggetti vs processi
+# 2. Distinzione chiara tra entità materiali e informazionali
+# 3. Struttura per ragionamento logico avanzato
+# 4. Base per validazione coerenza ontologica
+# 5. Ponte concettuale tra domini diversi
+
+# Prossimi sviluppi:
+# - Definire regole di inferenza BFO-based
+# - Implementare validazione coerenza automatica
+# - Creare template BFO per nuove entità LIMS
+
+# Ultimo aggiornamento: 2025-09-21T11:25:00Z
+# Versione query: 1.0.0

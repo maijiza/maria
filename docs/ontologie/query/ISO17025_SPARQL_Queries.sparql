@@ -1,0 +1,1251 @@
+@prefix : <http://www.semanticweb.org/unified-governance/queries#> .
+@prefix ugov: <http://www.semanticweb.org/unified-governance/ontology#> .
+@prefix cobit: <http://www.semanticweb.org/cobit5/ontology#> .
+@prefix iso17025: <http://www.semanticweb.org/iso17025/ontology#> .
+@prefix ags4: <http://www.semanticweb.org/ags4/ontology#> .
+@prefix sparql: <http://www.w3.org/ns/sparql#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+# ============================================================================
+# UNIFIED SPARQL QUERY COLLECTION 
+# FOR INTEGRATED COBIT 5 + ISO 17025 + AGS4 GOVERNANCE
+# ============================================================================
+
+<http://www.semanticweb.org/unified-governance/queries> a owl:Ontology ;
+    dcterms:title "Unified SPARQL Queries for Integrated Governance"@en ;
+    dcterms:title "Query SPARQL Unificate per Governance Integrata"@it ;
+    dcterms:description "Complete SPARQL query collection for unified COBIT 5 + ISO 17025 governance"@en ;
+    dcterms:created "2025-01-01"^^xsd:date ;
+    owl:imports <http://www.semanticweb.org/unified-governance/ontology> ;
+    owl:imports <http://www.semanticweb.org/iso17025/queries> ;
+    owl:imports <http://www.semanticweb.org/cobit5/queries> .
+
+# ============================================================================
+# SECTION 1: UNIFIED GOVERNANCE OVERVIEW QUERIES
+# ============================================================================
+
+## Query 1.1: Unified Governance Maturity Dashboard
+:UnifiedGovernanceMaturity a sparql:Query ;
+    rdfs:label "Dashboard Maturità Governance Unificata"@it ;
+    rdfs:label "Unified Governance Maturity Dashboard"@en ;
+    dcterms:description "Complete maturity assessment across COBIT and ISO 17025"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?framework ?domain ?process ?currentMaturity ?targetMaturity 
+               ?gap ?complianceLevel ?riskExposure ?priority
+        WHERE {
+            # Get COBIT processes
+            {
+                ?process a cobit:Process ;
+                        cobit:belongsToDomain ?domain ;
+                        cobit:currentCapabilityLevel ?currentMaturity ;
+                        cobit:targetCapabilityLevel ?targetMaturity .
+                BIND("COBIT 5" AS ?framework)
+                
+                # Get compliance level
+                OPTIONAL {
+                    ?process cobit:complianceLevel ?complianceLevel .
+                }
+            }
+            UNION
+            # Get ISO 17025 requirements
+            {
+                ?process a iso17025:CompetenceRequirement ;
+                        iso17025:hasClauseNumber ?domain ;
+                        ugov:currentMaturityLevel ?currentMaturity ;
+                        ugov:targetMaturityLevel ?targetMaturity .
+                BIND("ISO 17025" AS ?framework)
+                
+                # Get compliance status
+                OPTIONAL {
+                    ?process iso17025:hasComplianceStatus ?complianceLevel .
+                }
+            }
+            
+            # Calculate gap
+            BIND(?targetMaturity - ?currentMaturity AS ?gap)
+            
+            # Calculate risk exposure
+            BIND(?gap * 20 AS ?riskExposure)
+            
+            # Determine priority
+            BIND(
+                IF(?gap >= 2 && ?riskExposure > 60, "CRITICAL",
+                IF(?gap >= 1 && ?riskExposure > 40, "HIGH",
+                IF(?gap > 0, "MEDIUM",
+                "ACHIEVED"))) AS ?priority
+            )
+        }
+        ORDER BY DESC(?priority) DESC(?gap) ?framework
+    """ .
+
+## Query 1.2: Integrated Process Alignment Status
+:IntegratedProcessAlignment a sparql:Query ;
+    rdfs:label "Stato Allineamento Processi Integrati"@it ;
+    rdfs:label "Integrated Process Alignment Status"@en ;
+    dcterms:description "Shows alignment between COBIT processes and ISO 17025 clauses"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?cobitProcess ?cobitName ?isoClause ?isoName 
+               ?alignmentType ?integrationLevel ?synergies
+        WHERE {
+            ?alignment a ugov:DomainClauseAlignment ;
+                      ugov:alignsCOBITDomain ?cobitDomain ;
+                      ugov:alignsISOClause ?isoClause .
+            
+            ?cobitProcess cobit:belongsToDomain ?cobitDomain ;
+                         rdfs:label ?cobitName .
+            
+            ?isoClause rdfs:label ?isoName .
+            
+            # Get alignment type
+            OPTIONAL {
+                ?alignment ugov:alignmentType ?alignmentType .
+            }
+            
+            # Get integration level
+            OPTIONAL {
+                ?alignment ugov:integrationLevel ?integrationLevel .
+            }
+            
+            # Identify synergies
+            OPTIONAL {
+                ?alignment ugov:identifiedSynergies ?synergies .
+            }
+            
+            # Focus on key alignments
+            FILTER(?alignmentType IN ("Primary", "Direct", "Strong"))
+        }
+        ORDER BY ?cobitDomain ?cobitProcess
+    """ .
+
+## Query 1.3: Unified Risk Register
+:UnifiedRiskRegister a sparql:Query ;
+    rdfs:label "Registro Rischi Unificato"@it ;
+    rdfs:label "Unified Risk Register"@en ;
+    dcterms:description "Comprehensive risk register covering IT and laboratory risks"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?riskID ?riskType ?source ?description ?likelihood ?impact 
+               ?inherentRisk ?controls ?residualRisk ?treatment ?owner
+        WHERE {
+            # Unified risks
+            ?risk a ugov:UnifiedRisk ;
+                 ugov:riskID ?riskID ;
+                 rdfs:label ?description ;
+                 ugov:likelihood ?likelihood ;
+                 ugov:impact ?impact ;
+                 ugov:riskOwner ?owner .
+            
+            # Determine risk source
+            {
+                ?risk a cobit:ITRisk .
+                BIND("IT/COBIT" AS ?source)
+                BIND("IT Risk" AS ?riskType)
+            }
+            UNION
+            {
+                ?risk a iso17025:Risk .
+                BIND("Laboratory/ISO17025" AS ?source)
+                BIND("Lab Risk" AS ?riskType)
+            }
+            UNION
+            {
+                ?risk a ugov:InterfaceRisk .
+                BIND("IT-Lab Interface" AS ?source)
+                BIND("Interface Risk" AS ?riskType)
+            }
+            
+            # Calculate inherent risk
+            BIND(?likelihood * ?impact AS ?inherentRisk)
+            
+            # Get controls
+            OPTIONAL {
+                ?risk ugov:mitigatedBy ?control .
+                ?control rdfs:label ?controls ;
+                        ugov:effectiveness ?effectiveness .
+                
+                # Calculate residual risk
+                BIND(?inherentRisk * (1 - ?effectiveness/100) AS ?residualRisk)
+            }
+            
+            # Determine treatment
+            BIND(
+                IF(?residualRisk > 15, "TREAT",
+                IF(?residualRisk > 10, "TRANSFER",
+                IF(?residualRisk > 5, "TOLERATE",
+                "TERMINATE"))) AS ?treatment
+            )
+        }
+        ORDER BY DESC(?residualRisk) ?riskType
+    """ .
+
+# ============================================================================
+# SECTION 2: UNIFIED COMPLIANCE AND AUDIT QUERIES
+# ============================================================================
+
+## Query 2.1: Integrated Compliance Dashboard
+:IntegratedComplianceDashboard a sparql:Query ;
+    rdfs:label "Dashboard Conformità Integrato"@it ;
+    rdfs:label "Integrated Compliance Dashboard"@en ;
+    dcterms:description "Unified view of compliance across all frameworks"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?framework ?requirement ?complianceStatus ?evidence 
+               ?lastAssessment ?nextAssessment ?gaps ?actions
+        WHERE {
+            # COBIT compliance
+            {
+                ?requirement a cobit:ComplianceRequirement ;
+                           rdfs:label ?reqLabel ;
+                           cobit:complianceStatus ?complianceStatus ;
+                           cobit:lastAssessmentDate ?lastAssessment ;
+                           cobit:nextAssessmentDate ?nextAssessment .
+                BIND("COBIT 5" AS ?framework)
+            }
+            UNION
+            # ISO 17025 compliance
+            {
+                ?requirement a iso17025:ComplianceAssertion ;
+                           iso17025:hasComplianceStatus ?complianceStatus ;
+                           iso17025:lastAuditDate ?lastAssessment ;
+                           iso17025:nextAuditDate ?nextAssessment .
+                BIND("ISO 17025:2017" AS ?framework)
+            }
+            
+            # Get evidence
+            OPTIONAL {
+                ?requirement ugov:hasEvidence ?evidence .
+            }
+            
+            # Get gaps and actions
+            OPTIONAL {
+                ?requirement ugov:hasGap ?gap .
+                ?gap rdfs:label ?gaps ;
+                    ugov:hasCorrectiveAction ?action .
+                ?action rdfs:label ?actions .
+            }
+            
+            # Filter for items needing attention
+            FILTER(?complianceStatus != "Compliant" || 
+                   ?nextAssessment <= NOW() + "P90D"^^xsd:duration)
+        }
+        ORDER BY ?nextAssessment ?framework
+    """ .
+
+## Query 2.2: Unified Audit Program
+:UnifiedAuditProgram a sparql:Query ;
+    rdfs:label "Programma di Audit Unificato"@it ;
+    rdfs:label "Unified Audit Program"@en ;
+    dcterms:description "Integrated audit schedule covering both frameworks"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?auditID ?auditType ?scope ?scheduledDate ?auditor 
+               ?processesCount ?previousFindings ?riskRating ?duration
+        WHERE {
+            ?audit a ugov:UnifiedAudit ;
+                  ugov:auditID ?auditID ;
+                  ugov:scheduledDate ?scheduledDate ;
+                  ugov:assignedAuditor ?auditor ;
+                  ugov:estimatedDuration ?duration .
+            
+            # Determine audit type and scope
+            {
+                ?audit ugov:assessesCOBITProcesses ?cobitProc .
+                ?audit ugov:assessesISORequirements ?isoReq .
+                BIND("Integrated" AS ?auditType)
+                BIND("COBIT + ISO 17025" AS ?scope)
+            }
+            UNION
+            {
+                ?audit a cobit:ITAudit .
+                BIND("COBIT Only" AS ?auditType)
+                BIND("IT Governance" AS ?scope)
+            }
+            UNION
+            {
+                ?audit a iso17025:InternalAudit .
+                BIND("ISO 17025 Only" AS ?auditType)
+                BIND("Laboratory QMS" AS ?scope)
+            }
+            
+            # Count processes to audit
+            {
+                SELECT ?audit (COUNT(?proc) AS ?processesCount)
+                WHERE {
+                    ?audit ugov:coversProcess ?proc .
+                }
+                GROUP BY ?audit
+            }
+            
+            # Get previous findings count
+            OPTIONAL {
+                ?previousAudit ugov:precedes ?audit ;
+                              ugov:findingCount ?previousFindings .
+            }
+            
+            # Calculate risk rating for audit
+            OPTIONAL {
+                ?audit ugov:auditRiskRating ?riskRating .
+            }
+            
+            # Focus on upcoming audits
+            FILTER(?scheduledDate >= NOW() && 
+                   ?scheduledDate <= NOW() + "P180D"^^xsd:duration)
+        }
+        ORDER BY ?scheduledDate ?auditType
+    """ .
+
+## Query 2.3: Cross-Framework Findings Analysis
+:CrossFrameworkFindings a sparql:Query ;
+    rdfs:label "Analisi Finding Cross-Framework"@it ;
+    rdfs:label "Cross-Framework Findings Analysis"@en ;
+    dcterms:description "Analysis of audit findings across COBIT and ISO 17025"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?finding ?source ?relatedProcess ?severity ?category 
+               ?rootCause ?commonality ?correctiveAction ?status
+        WHERE {
+            ?finding a ugov:AuditFinding ;
+                    ugov:findingSeverity ?severity ;
+                    ugov:findingCategory ?category ;
+                    ugov:findingStatus ?status ;
+                    ugov:rootCause ?rootCause .
+            
+            # Identify source framework
+            {
+                ?finding cobit:relatedToProcess ?cobitProc .
+                ?cobitProc rdfs:label ?relatedProcess .
+                BIND("COBIT" AS ?source)
+            }
+            UNION
+            {
+                ?finding iso17025:relatedToClause ?isoClause .
+                ?isoClause rdfs:label ?relatedProcess .
+                BIND("ISO 17025" AS ?source)
+            }
+            
+            # Check for common findings across frameworks
+            OPTIONAL {
+                ?finding ugov:hasCommonPattern ?pattern .
+                ?pattern ugov:occursInFrameworks ?commonality .
+            }
+            
+            # Get corrective actions
+            OPTIONAL {
+                ?finding ugov:hasCorrectiveAction ?ca .
+                ?ca rdfs:label ?correctiveAction .
+            }
+            
+            # Filter for open or recurring findings
+            FILTER(?status IN ("Open", "In Progress", "Recurring"))
+        }
+        ORDER BY ?severity ?category ?source
+    """ .
+
+# ============================================================================
+# SECTION 3: UNIFIED RESOURCE AND COMPETENCY QUERIES
+# ============================================================================
+
+## Query 3.1: Unified Personnel Competency Matrix
+:UnifiedCompetencyMatrix a sparql:Query ;
+    rdfs:label "Matrice Competenze Personale Unificata"@it ;
+    rdfs:label "Unified Personnel Competency Matrix"@en ;
+    dcterms:description "Complete competency overview for IT and laboratory personnel"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        PREFIX ags4: <http://www.semanticweb.org/ags4/ontology#>
+        
+        SELECT ?person ?role ?department ?itSkills ?labSkills 
+               ?certifications ?authorizations ?trainingNeeds ?competencyScore
+        WHERE {
+            ?person a ugov:UnifiedStakeholder ;
+                   rdfs:label ?name ;
+                   ugov:hasRole ?role ;
+                   ugov:belongsToDepartment ?department .
+            
+            # IT competencies (COBIT)
+            OPTIONAL {
+                ?person cobit:hasITSkill ?itSkill .
+                ?itSkill rdfs:label ?itSkills ;
+                        cobit:proficiencyLevel ?itLevel .
+            }
+            
+            # Laboratory competencies (ISO 17025)
+            OPTIONAL {
+                ?person iso17025:hasCompetence ?labComp .
+                ?labComp rdfs:label ?labSkills ;
+                        iso17025:competenceLevel ?labLevel .
+            }
+            
+            # Geotechnical specific competencies
+            OPTIONAL {
+                ?person ags4:hasGeotechnicalCompetence ?geoComp .
+                ?geoComp rdfs:label ?geoSkills .
+            }
+            
+            # Certifications
+            OPTIONAL {
+                ?person ugov:hasCertification ?cert .
+                ?cert rdfs:label ?certifications ;
+                     ugov:expiryDate ?certExpiry .
+            }
+            
+            # Authorizations for specific activities
+            OPTIONAL {
+                ?person iso17025:authorizedFor ?auth .
+                ?auth rdfs:label ?authorizations .
+            }
+            
+            # Identify training needs
+            OPTIONAL {
+                ?person ugov:hasTrainingGap ?gap .
+                ?gap rdfs:label ?trainingNeeds ;
+                    ugov:priority ?trainingPriority .
+            }
+            
+            # Calculate overall competency score
+            BIND(
+                (COALESCE(?itLevel, 0) + COALESCE(?labLevel, 0)) / 2 
+                AS ?competencyScore
+            )
+        }
+        ORDER BY ?department ?role ?person
+    """ .
+
+## Query 3.2: Equipment and Infrastructure Utilization
+:UnifiedResourceUtilization a sparql:Query ;
+    rdfs:label "Utilizzo Risorse e Infrastrutture Unificate"@it ;
+    rdfs:label "Unified Equipment and Infrastructure Utilization"@en ;
+    dcterms:description "Combined view of IT infrastructure and laboratory equipment"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        PREFIX ags4: <http://www.semanticweb.org/ags4/ontology#>
+        
+        SELECT ?resource ?type ?category ?location ?utilization 
+               ?availability ?maintenanceStatus ?calibrationStatus ?value ?criticality
+        WHERE {
+            ?resource a ugov:InfrastructureAndEquipment ;
+                     rdfs:label ?resourceName ;
+                     ugov:resourceCategory ?category ;
+                     ugov:physicalLocation ?location ;
+                     ugov:currentUtilization ?utilization ;
+                     ugov:availability ?availability ;
+                     ugov:assetValue ?value ;
+                     ugov:criticalityRating ?criticality .
+            
+            # IT Infrastructure
+            {
+                ?resource a cobit:ITInfrastructure ;
+                         cobit:infrastructureType ?type ;
+                         cobit:maintenanceStatus ?maintenanceStatus .
+            }
+            UNION
+            # Laboratory Equipment
+            {
+                ?resource a iso17025:Equipment ;
+                         iso17025:equipmentType ?type ;
+                         iso17025:calibrationStatus ?calibrationStatus ;
+                         iso17025:maintenanceStatus ?maintenanceStatus .
+            }
+            UNION
+            # Geotechnical Equipment
+            {
+                ?resource a ags4:GeotechnicalEquipment ;
+                         ags4:equipmentType ?type ;
+                         ags4:calibrationStatus ?calibrationStatus .
+            }
+            
+            # Filter for critical or underutilized resources
+            FILTER(?criticality >= 3 || ?utilization < 50)
+        }
+        ORDER BY DESC(?criticality) ?utilization
+    """ .
+
+# ============================================================================
+# SECTION 4: UNIFIED PERFORMANCE AND METRICS QUERIES
+# ============================================================================
+
+## Query 4.1: Unified KPI Dashboard
+:UnifiedKPIDashboard a sparql:Query ;
+    rdfs:label "Dashboard KPI Unificato"@it ;
+    rdfs:label "Unified KPI Dashboard"@en ;
+    dcterms:description "Key performance indicators across IT and laboratory operations"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?kpiCategory ?kpiName ?currentValue ?targetValue 
+               ?trend ?variance ?status ?owner ?frequency
+        WHERE {
+            ?kpi a ugov:UnifiedMetric ;
+                ugov:metricCategory ?kpiCategory ;
+                rdfs:label ?kpiName ;
+                ugov:currentValue ?currentValue ;
+                ugov:targetValue ?targetValue ;
+                ugov:trend ?trend ;
+                ugov:measurementFrequency ?frequency ;
+                ugov:metricOwner ?owner .
+            
+            # Calculate variance
+            BIND(((?currentValue - ?targetValue) / ?targetValue * 100) AS ?variance)
+            
+            # Determine status
+            BIND(
+                IF(?currentValue >= ?targetValue, "ON TARGET",
+                IF(?currentValue >= 0.9 * ?targetValue, "NEAR TARGET",
+                IF(?currentValue >= 0.7 * ?targetValue, "BELOW TARGET",
+                "CRITICAL"))) AS ?status
+            )
+            
+            # Categories of interest
+            VALUES ?kpiCategory {
+                "Quality"
+                "Efficiency"
+                "Compliance"
+                "Customer Satisfaction"
+                "Financial"
+                "Risk"
+            }
+        }
+        ORDER BY ?kpiCategory ?status
+    """ .
+
+## Query 4.2: Service Level Performance
+:ServiceLevelPerformance a sparql:Query ;
+    rdfs:label "Performance Livelli di Servizio"@it ;
+    rdfs:label "Service Level Performance"@en ;
+    dcterms:description "SLA performance for IT services and laboratory testing"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?service ?serviceType ?slaMetric ?achieved ?target 
+               ?breaches ?availability ?mttr ?customerSatisfaction
+        WHERE {
+            ?service a ugov:UnifiedService ;
+                    rdfs:label ?serviceName ;
+                    ugov:serviceType ?serviceType ;
+                    ugov:hasSLA ?sla .
+            
+            ?sla ugov:metricName ?slaMetric ;
+                ugov:achievedValue ?achieved ;
+                ugov:targetValue ?target ;
+                ugov:breachCount ?breaches .
+            
+            # Get availability metrics
+            OPTIONAL {
+                ?service ugov:availability ?availability ;
+                        ugov:meanTimeToRecover ?mttr .
+            }
+            
+            # Get customer satisfaction
+            OPTIONAL {
+                ?service ugov:customerSatisfactionScore ?customerSatisfaction .
+            }
+            
+            # Service types
+            {
+                ?service a cobit:ITService .
+                BIND("IT Service" AS ?serviceType)
+            }
+            UNION
+            {
+                ?service a iso17025:TestingService .
+                BIND("Laboratory Testing" AS ?serviceType)
+            }
+        }
+        ORDER BY ?serviceType DESC(?breaches)
+    """ .
+
+## Query 4.3: Cost-Benefit Analysis
+:UnifiedCostBenefitAnalysis a sparql:Query ;
+    rdfs:label "Analisi Costi-Benefici Unificata"@it ;
+    rdfs:label "Unified Cost-Benefit Analysis"@en ;
+    dcterms:description "Cost-benefit analysis for unified governance initiatives"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?initiative ?type ?totalCost ?expectedBenefit ?actualBenefit 
+               ?roi ?paybackPeriod ?status ?strategicValue
+        WHERE {
+            ?initiative a ugov:GovernanceInitiative ;
+                       rdfs:label ?initiativeName ;
+                       ugov:initiativeType ?type ;
+                       ugov:totalCost ?totalCost ;
+                       ugov:expectedBenefit ?expectedBenefit ;
+                       ugov:implementationStatus ?status .
+            
+            # Get actual benefits if implemented
+            OPTIONAL {
+                ?initiative ugov:actualBenefit ?actualBenefit .
+            }
+            
+            # Calculate ROI
+            BIND(
+                IF(BOUND(?actualBenefit),
+                   ((?actualBenefit - ?totalCost) / ?totalCost * 100),
+                   ((?expectedBenefit - ?totalCost) / ?totalCost * 100))
+                AS ?roi
+            )
+            
+            # Get payback period
+            OPTIONAL {
+                ?initiative ugov:paybackPeriod ?paybackPeriod .
+            }
+            
+            # Get strategic value assessment
+            OPTIONAL {
+                ?initiative ugov:strategicValue ?strategicValue .
+            }
+            
+            # Filter for active or planned initiatives
+            FILTER(?status IN ("Active", "Planned", "Completed"))
+        }
+        ORDER BY DESC(?roi) ?status
+    """ .
+
+# ============================================================================
+# SECTION 5: LABORATORY-SPECIFIC UNIFIED QUERIES
+# ============================================================================
+
+## Query 5.1: Laboratory Governance Integration
+:LaboratoryGovernanceIntegration a sparql:Query ;
+    rdfs:label "Integrazione Governance Laboratorio"@it ;
+    rdfs:label "Laboratory Governance Integration"@en ;
+    dcterms:description "Integration status of laboratory processes with IT governance"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        PREFIX ags4: <http://www.semanticweb.org/ags4/ontology#>
+        
+        SELECT ?labProcess ?isoClause ?cobitProcess ?integrationLevel 
+               ?dataFlow ?systemSupport ?gaps ?benefits
+        WHERE {
+            ?labProcess a iso17025:CompetenceRequirement ;
+                       iso17025:hasClauseNumber ?isoClause ;
+                       rdfs:label ?labProcessName .
+            
+            # Find aligned COBIT process
+            OPTIONAL {
+                ?alignment ugov:alignsISOClause ?labProcess ;
+                          ugov:alignsCOBITProcess ?cobitProcess ;
+                          ugov:integrationLevel ?integrationLevel .
+                
+                ?cobitProcess rdfs:label ?cobitProcessName .
+            }
+            
+            # Check data flow integration
+            OPTIONAL {
+                ?labProcess ugov:hasDataFlow ?dataFlow .
+                ?dataFlow ugov:flowsTo ?system .
+            }
+            
+            # Check system support (LIMS)
+            OPTIONAL {
+                ?labProcess ugov:supportedBySystem ?systemSupport .
+            }
+            
+            # Identify integration gaps
+            OPTIONAL {
+                ?labProcess ugov:hasIntegrationGap ?gap .
+                ?gap rdfs:label ?gaps .
+            }
+            
+            # Identify benefits of integration
+            OPTIONAL {
+                ?labProcess ugov:integrationBenefit ?benefits .
+            }
+        }
+        ORDER BY ?isoClause
+    """ .
+
+## Query 5.2: Geotechnical Testing Dashboard
+:GeotechnicalTestingDashboard a sparql:Query ;
+    rdfs:label "Dashboard Prove Geotecniche"@it ;
+    rdfs:label "Geotechnical Testing Dashboard"@en ;
+    dcterms:description "Comprehensive dashboard for geotechnical laboratory operations"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        PREFIX ags4: <http://www.semanticweb.org/ags4/ontology#>
+        
+        SELECT ?testType ?project ?samplesCount ?testsCompleted 
+               ?testsInProgress ?avgTurnaround ?qualityScore ?nonconformities
+        WHERE {
+            ?project a ags4:PROJ ;
+                    ags4:hasProjectID ?projectID ;
+                    rdfs:label ?projectName .
+            
+            # Count samples
+            {
+                SELECT ?project (COUNT(?sample) AS ?samplesCount)
+                WHERE {
+                    ?sample ags4:belongsToProject ?project .
+                }
+                GROUP BY ?project
+            }
+            
+            # Count tests by type and status
+            {
+                SELECT ?project ?testType 
+                       (COUNT(?completed) AS ?testsCompleted)
+                       (COUNT(?inprogress) AS ?testsInProgress)
+                WHERE {
+                    ?test ags4:belongsToProject ?project ;
+                         a ?testType .
+                    
+                    OPTIONAL {
+                        ?test iso17025:testStatus "Completed" .
+                        BIND(?test AS ?completed)
+                    }
+                    OPTIONAL {
+                        ?test iso17025:testStatus "In Progress" .
+                        BIND(?test AS ?inprogress)
+                    }
+                    
+                    VALUES ?testType {
+                        ags4:TREG  # Triaxial
+                        ags4:GRAG  # Grain size
+                        ags4:LLPL  # Atterberg
+                        ags4:CONG  # Consolidation
+                        ags4:CMPG  # Compaction
+                    }
+                }
+                GROUP BY ?project ?testType
+            }
+            
+            # Calculate average turnaround
+            OPTIONAL {
+                SELECT ?project (AVG(?turnaround) AS ?avgTurnaround)
+                WHERE {
+                    ?test ags4:belongsToProject ?project ;
+                         iso17025:turnaroundTime ?turnaround .
+                }
+                GROUP BY ?project
+            }
+            
+            # Get quality metrics
+            OPTIONAL {
+                ?project ugov:qualityScore ?qualityScore ;
+                        iso17025:nonconformityCount ?nonconformities .
+            }
+        }
+        ORDER BY ?project ?testType
+    """ .
+
+## Query 5.3: LIMS Integration Status
+:LIMSIntegrationStatus a sparql:Query ;
+    rdfs:label "Stato Integrazione LIMS"@it ;
+    rdfs:label "LIMS Integration Status"@en ;
+    dcterms:description "Status of LIMS integration with IT governance and lab operations"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        PREFIX ags4: <http://www.semanticweb.org/ags4/ontology#>
+        
+        SELECT ?limsModule ?functionality ?cobitSupport ?isoRequirement 
+               ?dataFormat ?integrationStatus ?issues ?improvements
+        WHERE {
+            ?lims a ugov:LIMS ;
+                 ugov:hasModule ?limsModule .
+            
+            ?limsModule rdfs:label ?functionality ;
+                       ugov:integrationStatus ?integrationStatus .
+            
+            # COBIT process support
+            OPTIONAL {
+                ?limsModule ugov:supportsCOBITProcess ?cobitProc .
+                ?cobitProc rdfs:label ?cobitSupport .
+            }
+            
+            # ISO 17025 requirement support
+            OPTIONAL {
+                ?limsModule ugov:supportsISORequirement ?isoReq .
+                ?isoReq rdfs:label ?isoRequirement .
+            }
+            
+            # Data format handling (AGS4)
+            OPTIONAL {
+                ?limsModule ugov:handlesDataFormat ?dataFormat .
+            }
+            
+            # Integration issues
+            OPTIONAL {
+                ?limsModule ugov:hasIntegrationIssue ?issue .
+                ?issue rdfs:label ?issues .
+            }
+            
+            # Improvement opportunities
+            OPTIONAL {
+                ?limsModule ugov:hasImprovement ?improvement .
+                ?improvement rdfs:label ?improvements .
+            }
+        }
+        ORDER BY ?limsModule
+    """ .
+
+# ============================================================================
+# SECTION 6: STRATEGIC AND EXECUTIVE QUERIES
+# ============================================================================
+
+## Query 6.1: Executive Governance Dashboard
+:ExecutiveGovernanceDashboard a sparql:Query ;
+    rdfs:label "Dashboard Direzionale Governance"@it ;
+    rdfs:label "Executive Governance Dashboard"@en ;
+    dcterms:description "High-level governance overview for executive management"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?area ?overallScore ?trend ?risks ?opportunities 
+               ?investmentRequired ?expectedROI ?strategicAlignment
+        WHERE {
+            ?area a ugov:GovernanceArea ;
+                 rdfs:label ?areaName ;
+                 ugov:maturityScore ?overallScore ;
+                 ugov:trend ?trend ;
+                 ugov:strategicAlignment ?strategicAlignment .
+            
+            # Count risks
+            {
+                SELECT ?area (COUNT(?risk) AS ?risks)
+                WHERE {
+                    ?risk ugov:affectsArea ?area ;
+                         ugov:riskLevel "High" .
+                }
+                GROUP BY ?area
+            }
+            
+            # Count opportunities
+            {
+                SELECT ?area (COUNT(?opp) AS ?opportunities)
+                WHERE {
+                    ?opp ugov:benefitsArea ?area ;
+                        ugov:opportunityType "Strategic" .
+                }
+                GROUP BY ?area
+            }
+            
+            # Investment requirements
+            OPTIONAL {
+                ?area ugov:requiredInvestment ?investmentRequired ;
+                     ugov:expectedROI ?expectedROI .
+            }
+            
+            VALUES ?areaName {
+                "IT Governance"
+                "Laboratory Quality"
+                "Risk Management"
+                "Compliance"
+                "Resource Optimization"
+                "Value Delivery"
+            }
+        }
+        ORDER BY ?strategicAlignment DESC(?overallScore)
+    """ .
+
+## Query 6.2: Strategic Initiative Tracker
+:StrategicInitiativeTracker a sparql:Query ;
+    rdfs:label "Tracciamento Iniziative Strategiche"@it ;
+    rdfs:label "Strategic Initiative Tracker"@en ;
+    dcterms:description "Tracking strategic initiatives across unified governance"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?initiative ?sponsor ?startDate ?targetDate ?progress 
+               ?budget ?spent ?benefits ?risks ?nextMilestone
+        WHERE {
+            ?initiative a ugov:StrategicInitiative ;
+                       rdfs:label ?initiativeName ;
+                       ugov:sponsor ?sponsor ;
+                       ugov:startDate ?startDate ;
+                       ugov:targetCompletionDate ?targetDate ;
+                       ugov:progressPercentage ?progress ;
+                       ugov:approvedBudget ?budget ;
+                       ugov:spentToDate ?spent .
+            
+            # Benefits realization
+            OPTIONAL {
+                ?initiative ugov:expectedBenefits ?benefits .
+            }
+            
+            # Associated risks
+            OPTIONAL {
+                ?initiative ugov:hasRisk ?risk .
+                ?risk rdfs:label ?risks .
+            }
+            
+            # Next milestone
+            OPTIONAL {
+                ?initiative ugov:hasNextMilestone ?milestone .
+                ?milestone rdfs:label ?nextMilestone ;
+                          ugov:dueDate ?milestoneDate .
+                FILTER(?milestoneDate > NOW())
+            }
+            
+            # Filter for active initiatives
+            FILTER(?progress < 100)
+        }
+        ORDER BY ?targetDate ?initiative
+    """ .
+
+## Query 6.3: Governance Value Realization
+:GovernanceValueRealization a sparql:Query ;
+    rdfs:label "Realizzazione Valore Governance"@it ;
+    rdfs:label "Governance Value Realization"@en ;
+    dcterms:description "Value realization from unified governance implementation"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?valueStream ?baseline ?current ?target ?improvement 
+               ?financialImpact ?qualityImpact ?timeToValue
+        WHERE {
+            ?valueStream a ugov:ValueStream ;
+                        rdfs:label ?streamName ;
+                        ugov:baselineValue ?baseline ;
+                        ugov:currentValue ?current ;
+                        ugov:targetValue ?target ;
+                        ugov:timeToValue ?timeToValue .
+            
+            # Calculate improvement
+            BIND(((?current - ?baseline) / ?baseline * 100) AS ?improvement)
+            
+            # Financial impact
+            OPTIONAL {
+                ?valueStream ugov:financialImpact ?financialImpact .
+            }
+            
+            # Quality impact
+            OPTIONAL {
+                ?valueStream ugov:qualityImpact ?qualityImpact .
+            }
+            
+            VALUES ?streamName {
+                "Reduced Audit Costs"
+                "Improved Compliance"
+                "Faster Service Delivery"
+                "Better Risk Management"
+                "Enhanced Quality"
+                "Resource Optimization"
+            }
+        }
+        ORDER BY DESC(?improvement)
+    """ .
+
+# ============================================================================
+# SECTION 7: PREDICTIVE AND ANALYTICAL QUERIES
+# ============================================================================
+
+## Query 7.1: Risk Prediction Model
+:RiskPredictionModel a sparql:Query ;
+    rdfs:label "Modello Predittivo Rischi"@it ;
+    rdfs:label "Risk Prediction Model"@en ;
+    dcterms:description "Predictive analysis of emerging risks"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?riskArea ?currentIndicators ?trendAnalysis ?predictedImpact 
+               ?probabilityIncrease ?timeHorizon ?earlyWarnings ?mitigationUrgency
+        WHERE {
+            ?riskArea a ugov:RiskArea ;
+                     rdfs:label ?areaName ;
+                     ugov:currentRiskScore ?currentScore .
+            
+            # Get leading indicators
+            ?indicator ugov:indicatesRisk ?riskArea ;
+                      ugov:indicatorValue ?currentIndicators ;
+                      ugov:indicatorTrend ?trendAnalysis .
+            
+            # Predictive analysis
+            OPTIONAL {
+                ?prediction ugov:predictsRisk ?riskArea ;
+                           ugov:predictedImpact ?predictedImpact ;
+                           ugov:probabilityIncrease ?probabilityIncrease ;
+                           ugov:timeHorizon ?timeHorizon .
+            }
+            
+            # Early warning signals
+            OPTIONAL {
+                ?warning ugov:warnsAbout ?riskArea ;
+                        rdfs:label ?earlyWarnings .
+            }
+            
+            # Calculate mitigation urgency
+            BIND(
+                IF(?probabilityIncrease > 30 && ?timeHorizon < 90, "URGENT",
+                IF(?probabilityIncrease > 20 && ?timeHorizon < 180, "HIGH",
+                IF(?probabilityIncrease > 10, "MEDIUM",
+                "LOW"))) AS ?mitigationUrgency
+            )
+            
+            # Filter for emerging risks
+            FILTER(?trendAnalysis = "Increasing" || ?probabilityIncrease > 10)
+        }
+        ORDER BY ?mitigationUrgency ?timeHorizon
+    """ .
+
+## Query 7.2: Process Optimization Opportunities
+:ProcessOptimizationOpportunities a sparql:Query ;
+    rdfs:label "Opportunità Ottimizzazione Processi"@it ;
+    rdfs:label "Process Optimization Opportunities"@en ;
+    dcterms:description "Identify process optimization opportunities through data analysis"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?process ?currentEfficiency ?benchmarkEfficiency ?improvementPotential 
+               ?automationOpportunity ?estimatedSavings ?implementationEffort
+        WHERE {
+            ?process a ugov:UnifiedProcess ;
+                    rdfs:label ?processName ;
+                    ugov:currentEfficiency ?currentEfficiency ;
+                    ugov:processMaturity ?maturity .
+            
+            # Get benchmark data
+            OPTIONAL {
+                ?benchmark ugov:benchmarkFor ?process ;
+                          ugov:benchmarkEfficiency ?benchmarkEfficiency .
+            }
+            
+            # Calculate improvement potential
+            BIND((?benchmarkEfficiency - ?currentEfficiency) AS ?improvementPotential)
+            
+            # Identify automation opportunities
+            OPTIONAL {
+                ?process ugov:manualSteps ?manual ;
+                        ugov:automationPotential ?automationOpportunity ;
+                        ugov:estimatedSavings ?estimatedSavings ;
+                        ugov:implementationEffort ?implementationEffort .
+            }
+            
+            # Filter for optimization candidates
+            FILTER(?improvementPotential > 20 || ?automationOpportunity > 50)
+        }
+        ORDER BY DESC(?improvementPotential) DESC(?estimatedSavings)
+    """ .
+
+## Query 7.3: Trend Analysis and Forecasting
+:TrendAnalysisForecasting a sparql:Query ;
+    rdfs:label "Analisi Trend e Previsioni"@it ;
+    rdfs:label "Trend Analysis and Forecasting"@en ;
+    dcterms:description "Historical trends and future forecasts for key metrics"@en ;
+    sparql:queryString """
+        PREFIX ugov: <http://www.semanticweb.org/unified-governance/ontology#>
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX iso17025: <http://www.semanticweb.org/iso17025/ontology#>
+        
+        SELECT ?metric ?historicalAvg ?currentValue ?trend 
+               ?forecast3Months ?forecast6Months ?confidence ?actionRequired
+        WHERE {
+            ?metric a ugov:UnifiedMetric ;
+                   rdfs:label ?metricName ;
+                   ugov:historicalAverage ?historicalAvg ;
+                   ugov:currentValue ?currentValue ;
+                   ugov:trend ?trend .
+            
+            # Forecasting
+            OPTIONAL {
+                ?forecast ugov:forecastsMetric ?metric ;
+                         ugov:forecast3Months ?forecast3Months ;
+                         ugov:forecast6Months ?forecast6Months ;
+                         ugov:confidenceLevel ?confidence .
+            }
+            
+            # Determine if action required
+            BIND(
+                IF(?trend = "Declining" && ?currentValue < ?historicalAvg * 0.8, "IMMEDIATE",
+                IF(?forecast3Months < ?historicalAvg * 0.7, "SOON",
+                IF(?trend = "Declining", "MONITOR",
+                "NONE"))) AS ?actionRequired
+            )
+            
+            # Focus on key metrics
+            FILTER(?metric IN (
+                ugov:QualityMetric,
+                ugov:ComplianceMetric,
+                ugov:EfficiencyMetric,
+                ugov:CustomerSatisfactionMetric
+            ))
+        }
+        ORDER BY ?actionRequired ?metric
+    """ .
+
+# ============================================================================
+# SHACL VALIDATION SHAPES FOR UNIFIED GOVERNANCE
+# ============================================================================
+
+## Unified Process Validation
+:UnifiedProcessShape a sh:NodeShape ;
+    sh:targetClass ugov:UnifiedProcess ;
+    sh:property [
+        sh:path ugov:integratesCOBIT ;
+        sh:minCount 0 ;
+        sh:class cobit:Process ;
+        sh:message "If integrated with COBIT, must reference valid COBIT process"@en
+    ] ;
+    sh:property [
+        sh:path ugov:integratesISO ;
+        sh:minCount 0 ;
+        sh:class iso17025:CompetenceRequirement ;
+        sh:message "If integrated with ISO, must reference valid ISO requirement"@en
+    ] ;
+    sh:property [
+        sh:path ugov:integrationLevel ;
+        sh:minCount 1 ;
+        sh:in ("Full" "Partial" "Planned" "None") ;
+        sh:message "Must specify integration level"@en
+    ] ;
+    sh:property [
+        sh:path ugov:unifiedMaturityScore ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 5 ;
+        sh:message "Unified maturity score must be between 0 and 5"@en
+    ] .
+
+## Unified Risk Validation
+:UnifiedRiskShape a sh:NodeShape ;
+    sh:targetClass ugov:UnifiedRisk ;
+    sh:or (
+        [ sh:class cobit:ITRisk ]
+        [ sh:class iso17025:Risk ]
+        [ sh:class ugov:InterfaceRisk ]
+    ) ;
+    sh:property [
+        sh:path ugov:likelihood ;
+        sh:minCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 5 ;
+        sh:message "Risk likelihood required (1-5)"@en
+    ] ;
+    sh:property [
+        sh:path ugov:impact ;
+        sh:minCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 5 ;
+        sh:message "Risk impact required (1-5)"@en
+    ] ;
+    sh:property [
+        sh:path ugov:riskOwner ;
+        sh:minCount 1 ;
+        sh:class ugov:UnifiedStakeholder ;
+        sh:message "Risk must have an owner"@en
+    ] .
+
+## Unified Audit Validation
+:UnifiedAuditShape a sh:NodeShape ;
+    sh:targetClass ugov:UnifiedAudit ;
+    sh:property [
+        sh:path ugov:auditID ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^AUD-[0-9]{4}-[0-9]{3}$" ;
+        sh:message "Audit ID must follow pattern AUD-YYYY-NNN"@en
+    ] ;
+    sh:property [
+        sh:path ugov:assessesCOBITProcesses ;
+        sh:minCount 0 ;
+        sh:class cobit:Process
+    ] ;
+    sh:property [
+        sh:path ugov:assessesISORequirements ;
+        sh:minCount 0 ;
+        sh:class iso17025:CompetenceRequirement
+    ] ;
+    sh:property [
+        sh:path ugov:scheduledDate ;
+        sh:minCount 1 ;
+        sh:datatype xsd:date ;
+        sh:message "Audit must have scheduled date"@en
+    ] .
+
+## LIMS Integration Validation
+:LIMSIntegrationShape a sh:NodeShape ;
+    sh:targetClass ugov:LIMS ;
+    sh:property [
+        sh:path ugov:managedByCOBIT ;
+        sh:minCount 1 ;
+        sh:hasValue cobit:BAI03_ManageSolutionsIdentificationAndBuild ;
+        sh:message "LIMS must be managed under COBIT BAI03"@en
+    ] ;
+    sh:property [
+        sh:path ugov:supportsISO ;
+        sh:minCount 1 ;
+        sh:hasValue iso17025:DataControl ;
+        sh:message "LIMS must support ISO 17025 data control"@en
+    ] ;
+    sh:property [
+        sh:path ugov:handlesAGS ;
+        sh:minCount 0 ;
+        sh:hasValue ags4:AGS4DataFormat ;
+        sh:message "If handling geotechnical data, must support AGS4"@en
+    ] .
+
+# ============================================================================
+# END OF UNIFIED SPARQL QUERY COLLECTION
+# ============================================================================
+
+# This comprehensive query collection provides:
+# 1. Unified governance overview queries
+# 2. Integrated compliance and audit queries
+# 3. Unified resource and competency queries
+# 4. Performance metrics and KPIs across frameworks
+# 5. Laboratory-specific integration queries
+# 6. Strategic and executive dashboards
+# 7. Predictive analytics and optimization
+# 8. SHACL validation for unified governance
+#
+# Total: 25+ major query templates covering all aspects of unified governance
+# 
+# Benefits of this unified approach:
+# - Single source of truth for governance metrics
+# - Reduced audit and assessment burden
+# - Holistic risk management
+# - Integrated performance monitoring
+# - Streamlined compliance reporting
+# - Optimized resource allocation
+# - Enhanced decision-making through integrated analytics

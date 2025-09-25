@@ -35,12 +35,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Runtime stage - build the server here
 FROM python:3.12-slim
 
-# Install uv using the installer script
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Install uv using the installer script
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin:$PATH"
@@ -62,6 +63,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Set up the server application
 WORKDIR /app
+
+# Copy server files
 COPY ./server/pyproject.toml ./server/README.md ./server/uv.lock ./
 COPY ./server/graph_service ./graph_service
 
@@ -69,19 +72,28 @@ COPY ./server/graph_service ./graph_service
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
+# Add dev mode build arg
+ARG DEV_MODE=false
+RUN if [ "$DEV_MODE" = "true" ]; then \
+    uv pip install -e .[dev]; \
+    fi
+
 # Change ownership to app user
 RUN chown -R app:app /app
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
-    PATH="/app/.venv/bin:$PATH"
+    PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="/app"
 
 # Switch to non-root user
 USER app
+
+WORKDIR /app/graph_service
 
 # Set port
 ENV PORT=8000
 EXPOSE $PORT
 
 # Use uv run for execution
-CMD ["uv", "run", "uvicorn", "graph_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,60 @@
+@prefix : <http://www.semanticweb.org/unified-governance/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cobit5: <http://purl.org/atextor/ontology/cobit5#> .
+@prefix iso17025: <http://www.semanticweb.org/iso17025/ontology#> .
+
+<http://www.semanticweb.org/unified-governance/ontology> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    dcterms:title "Unified Governance Ontology (COBIT 5 and ISO 17025)"@en ;
+    dcterms:description "This ontology provides the mappings and alignments between the COBIT 5 and ISO 17025 ontologies to create a unified model for governance, risk, and compliance."@en ;
+    owl:imports <http://purl.org/atextor/ontology/cobit5> ,
+                <http://www.semanticweb.org/iso17025/ontology> .
+
+# Here we will define the mappings (the automorphism)
+
+# 1. Unified Process
+:UnifiedProcess a owl:Class ;
+    rdfs:label "Unified Process"@en ;
+    dcterms:description "A common superclass for all processes, whether from COBIT 5 or ISO 17025."@en .
+
+cobit5:Process rdfs:subClassOf :UnifiedProcess .
+iso17025:LaboratoryActivity rdfs:subClassOf :UnifiedProcess .
+
+# 2. Unified Risk
+:UnifiedRisk a owl:Class ;
+    rdfs:label "Unified Risk"@en ;
+    dcterms:description "A common superclass for all risks, whether from COBIT 5 or ISO 17025."@en .
+
+# Since cobit5:Risk is not defined in the original ontology, we define it here for alignment purposes.
+cobit5:Risk a owl:Class ;
+    rdfs:label "COBIT 5 Risk"@en .
+
+cobit5:Risk rdfs:subClassOf :UnifiedRisk .
+iso17025:Risk rdfs:subClassOf :UnifiedRisk .
+iso17025:RiskToImpartiality rdfs:subClassOf :UnifiedRisk .
+
+# 3. Unified Role/Personnel
+:UnifiedPersonnel a owl:Class ;
+    rdfs:label "Unified Personnel"@en ;
+    dcterms:description "A common superclass for all personnel or roles defined in COBIT 5 and ISO 17025."@en .
+
+cobit5:Role rdfs:subClassOf :UnifiedPersonnel .
+iso17025:Personnel rdfs:subClassOf :UnifiedPersonnel .
+
+# 4. Alignment Properties
+:alignsWith a owl:ObjectProperty ;
+    rdfs:label "aligns with"@en ;
+    dcterms:description "A generic property to state that a concept from one ontology aligns with a concept from another."@en .
+
+:isSupportedBy a owl:ObjectProperty ;
+    rdfs:label "is supported by"@en ;
+    dcterms:description "A property to link a process or activity to a supporting resource or IT system."@en .
+
+# Example alignment
+cobit5:APO07 rdfs:label "APO07 Manage Human Resources" .
+iso17025:Personnel owl:equivalentClass cobit5:APO07 .
+

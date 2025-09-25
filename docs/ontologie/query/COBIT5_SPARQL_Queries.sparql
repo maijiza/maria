@@ -1,0 +1,1096 @@
+@prefix : <http://www.semanticweb.org/cobit5/queries#> .
+@prefix cobit: <http://www.semanticweb.org/cobit5/ontology#> .
+@prefix sparql: <http://www.w3.org/ns/sparql#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ============================================================================
+# SPARQL QUERY COLLECTION FOR COBIT 5 IT GOVERNANCE
+# ============================================================================
+
+<http://www.semanticweb.org/cobit5/queries> a owl:Ontology ;
+    dcterms:title "SPARQL Query Collection for COBIT 5 IT Governance"@en ;
+    dcterms:title "Collezione Query SPARQL per COBIT 5 Governance IT"@it ;
+    dcterms:description "Comprehensive SPARQL queries for COBIT 5 framework implementation and assessment"@en ;
+    dcterms:created "2025-01-01"^^xsd:date ;
+    rdfs:comment "Based on COBIT 5 framework structure from ISACA"@en .
+
+# ============================================================================
+# SECTION 1: GOVERNANCE AND MANAGEMENT PROCESSES
+# ============================================================================
+
+## Query 1.1: Process Capability Assessment
+:ProcessCapabilityAssessment a sparql:Query ;
+    rdfs:label "Valutazione Capacità dei Processi"@it ;
+    rdfs:label "Process Capability Assessment"@en ;
+    dcterms:description "Assess capability levels for all COBIT 5 processes"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        
+        SELECT ?domain ?process ?processName ?currentLevel ?targetLevel 
+               ?gap ?priority ?assessmentDate
+        WHERE {
+            ?process a cobit:Process ;
+                    cobit:belongsToDomain ?domain ;
+                    rdfs:label ?processName ;
+                    cobit:currentCapabilityLevel ?currentLevel ;
+                    cobit:targetCapabilityLevel ?targetLevel ;
+                    cobit:lastAssessmentDate ?assessmentDate .
+            
+            # Calculate capability gap
+            BIND(?targetLevel - ?currentLevel AS ?gap)
+            
+            # Determine priority based on gap
+            BIND(
+                IF(?gap >= 2, "CRITICAL",
+                IF(?gap >= 1, "HIGH",
+                IF(?gap > 0, "MEDIUM",
+                "ACHIEVED"))) AS ?priority
+            )
+        }
+        ORDER BY DESC(?gap) ?domain ?process
+    """ .
+
+## Query 1.2: RACI Matrix for Processes
+:RACIMatrix a sparql:Query ;
+    rdfs:label "Matrice RACI dei Processi"@it ;
+    rdfs:label "Process RACI Matrix"@en ;
+    dcterms:description "Responsibility assignment matrix for COBIT processes"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?process ?activity ?role ?responsibility ?stakeholder
+        WHERE {
+            ?process a cobit:Process ;
+                    cobit:hasActivity ?activity .
+            
+            ?activity cobit:hasRACIAssignment ?assignment .
+            
+            ?assignment cobit:role ?role ;
+                       cobit:responsibilityType ?responsibility ;  # R, A, C, I
+                       cobit:assignedTo ?stakeholder .
+            
+            FILTER(?responsibility IN ("Responsible", "Accountable", "Consulted", "Informed"))
+        }
+        ORDER BY ?process ?activity ?responsibility
+    """ .
+
+## Query 1.3: Governance Processes Status
+:GovernanceProcessesStatus a sparql:Query ;
+    rdfs:label "Stato Processi di Governance EDM"@it ;
+    rdfs:label "EDM Governance Processes Status"@en ;
+    dcterms:description "Status of Evaluate, Direct and Monitor processes"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?process ?processCode ?processName ?maturityLevel 
+               ?implementation ?effectiveness ?lastReview
+        WHERE {
+            ?process a cobit:GovernanceProcess ;
+                    cobit:processCode ?processCode ;
+                    rdfs:label ?processName ;
+                    cobit:maturityLevel ?maturityLevel ;
+                    cobit:implementationStatus ?implementation ;
+                    cobit:effectiveness ?effectiveness ;
+                    cobit:lastReviewDate ?lastReview .
+            
+            # Filter for EDM domain processes
+            FILTER(STRSTARTS(?processCode, "EDM"))
+        }
+        ORDER BY ?processCode
+    """ .
+
+## Query 1.4: Management Processes by Domain
+:ManagementProcessesByDomain a sparql:Query ;
+    rdfs:label "Processi di Management per Dominio"@it ;
+    rdfs:label "Management Processes by Domain"@en ;
+    dcterms:description "All management processes grouped by domain (APO, BAI, DSS, MEA)"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?domain ?domainName ?process ?processName ?purpose 
+               ?outcomes (COUNT(?control) AS ?controlCount)
+        WHERE {
+            ?domain a cobit:ManagementDomain ;
+                   rdfs:label ?domainName .
+            
+            ?process cobit:belongsToDomain ?domain ;
+                    rdfs:label ?processName ;
+                    cobit:purpose ?purpose .
+            
+            # Count related controls
+            OPTIONAL {
+                ?process cobit:hasControl ?control .
+            }
+            
+            # Get process outcomes
+            OPTIONAL {
+                ?process cobit:hasOutcome ?outcome .
+                ?outcome rdfs:label ?outcomes .
+            }
+        }
+        GROUP BY ?domain ?domainName ?process ?processName ?purpose ?outcomes
+        ORDER BY ?domain ?process
+    """ .
+
+# ============================================================================
+# SECTION 2: IT GOALS AND ENTERPRISE GOALS ALIGNMENT
+# ============================================================================
+
+## Query 2.1: Goals Cascade - Enterprise to IT Goals
+:GoalsCascadeEnterpriseToIT a sparql:Query ;
+    rdfs:label "Cascata Obiettivi - Da Aziendali a IT"@it ;
+    rdfs:label "Goals Cascade - Enterprise to IT"@en ;
+    dcterms:description "Mapping between enterprise goals and IT-related goals"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?enterpriseGoal ?egCategory ?egDescription 
+               ?itGoal ?itgCategory ?itgDescription ?mappingStrength
+        WHERE {
+            ?enterpriseGoal a cobit:EnterpriseGoal ;
+                          cobit:goalCategory ?egCategory ;
+                          rdfs:label ?egDescription .
+            
+            ?mapping cobit:fromEnterpriseGoal ?enterpriseGoal ;
+                    cobit:toITGoal ?itGoal ;
+                    cobit:mappingStrength ?mappingStrength .  # P (Primary) or S (Secondary)
+            
+            ?itGoal a cobit:ITRelatedGoal ;
+                   cobit:goalCategory ?itgCategory ;
+                   rdfs:label ?itgDescription .
+            
+            FILTER(?mappingStrength IN ("Primary", "Secondary"))
+        }
+        ORDER BY ?egCategory ?enterpriseGoal ?mappingStrength
+    """ .
+
+## Query 2.2: IT Goals to Process Mapping
+:ITGoalsToProcessMapping a sparql:Query ;
+    rdfs:label "Mappatura Obiettivi IT ai Processi"@it ;
+    rdfs:label "IT Goals to Process Mapping"@en ;
+    dcterms:description "Which processes support which IT goals"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?itGoal ?goalDescription ?process ?processName 
+               ?supportLevel ?currentCapability ?requiredCapability
+        WHERE {
+            ?itGoal a cobit:ITRelatedGoal ;
+                   rdfs:label ?goalDescription .
+            
+            ?mapping cobit:fromITGoal ?itGoal ;
+                    cobit:toProcess ?process ;
+                    cobit:supportLevel ?supportLevel ;  # Primary or Secondary
+                    cobit:requiredCapability ?requiredCapability .
+            
+            ?process rdfs:label ?processName ;
+                    cobit:currentCapabilityLevel ?currentCapability .
+            
+            # Identify gaps
+            FILTER(?currentCapability < ?requiredCapability)
+        }
+        ORDER BY ?itGoal DESC(?supportLevel) ?process
+    """ .
+
+## Query 2.3: Balanced Scorecard Perspectives
+:BalancedScorecardPerspectives a sparql:Query ;
+    rdfs:label "Prospettive Balanced Scorecard"@it ;
+    rdfs:label "Balanced Scorecard Perspectives"@en ;
+    dcterms:description "Goals organized by BSC perspectives"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?perspective (COUNT(?goal) AS ?goalCount) 
+               (AVG(?achievement) AS ?avgAchievement) ?status
+        WHERE {
+            ?goal a cobit:EnterpriseGoal ;
+                 cobit:bscPerspective ?perspective ;
+                 cobit:achievementLevel ?achievement .
+            
+            VALUES ?perspective {
+                "Financial"
+                "Customer"
+                "Internal"
+                "Learning and Growth"
+            }
+            
+            # Determine overall status
+            BIND(
+                IF(?avgAchievement >= 80, "GREEN",
+                IF(?avgAchievement >= 60, "YELLOW",
+                "RED")) AS ?status
+            )
+        }
+        GROUP BY ?perspective ?status
+        ORDER BY ?perspective
+    """ .
+
+# ============================================================================
+# SECTION 3: ENABLERS ASSESSMENT
+# ============================================================================
+
+## Query 3.1: Seven Enablers Status
+:SevenEnablersStatus a sparql:Query ;
+    rdfs:label "Stato dei Sette Abilitanti"@it ;
+    rdfs:label "Seven Enablers Status"@en ;
+    dcterms:description "Assessment of all seven COBIT 5 enablers"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?enabler ?enablerName ?dimension ?score ?maturity ?gaps ?improvements
+        WHERE {
+            ?enabler a cobit:Enabler ;
+                    rdfs:label ?enablerName ;
+                    cobit:maturityScore ?maturity .
+            
+            # Enabler dimensions assessment
+            ?enabler cobit:hasDimension ?dim .
+            ?dim cobit:dimensionType ?dimension ;
+                cobit:dimensionScore ?score ;
+                cobit:identifiedGaps ?gaps ;
+                cobit:improvementActions ?improvements .
+            
+            VALUES ?enablerName {
+                "Principles, Policies and Frameworks"
+                "Processes"
+                "Organisational Structures"
+                "Culture, Ethics and Behaviour"
+                "Information"
+                "Services, Infrastructure and Applications"
+                "People, Skills and Competencies"
+            }
+        }
+        ORDER BY ?enabler ?dimension
+    """ .
+
+## Query 3.2: Information Enabler Assessment
+:InformationEnablerAssessment a sparql:Query ;
+    rdfs:label "Valutazione Abilitante Informazioni"@it ;
+    rdfs:label "Information Enabler Assessment"@en ;
+    dcterms:description "Detailed assessment of information as an enabler"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?informationType ?quality ?availability ?currency 
+               ?accuracy ?integrity ?retention ?classification
+        WHERE {
+            ?info a cobit:InformationEnabler ;
+                 cobit:informationType ?informationType ;
+                 cobit:qualityLevel ?quality ;
+                 cobit:availabilityLevel ?availability ;
+                 cobit:currencyStatus ?currency ;
+                 cobit:accuracyLevel ?accuracy ;
+                 cobit:integrityLevel ?integrity ;
+                 cobit:retentionPeriod ?retention ;
+                 cobit:classification ?classification .
+            
+            # Filter for critical information
+            FILTER(?classification IN ("Confidential", "Restricted", "Internal"))
+        }
+        ORDER BY ?classification ?informationType
+    """ .
+
+## Query 3.3: People Skills and Competencies Gap
+:PeopleSkillsGapAnalysis a sparql:Query ;
+    rdfs:label "Analisi Gap Competenze del Personale"@it ;
+    rdfs:label "People Skills Gap Analysis"@en ;
+    dcterms:description "Skills gap analysis for IT personnel"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?role ?skill ?requiredLevel ?currentLevel ?gap 
+               ?trainingRequired ?priority
+        WHERE {
+            ?role a cobit:OrganizationalRole ;
+                 cobit:requiresSkill ?skillReq .
+            
+            ?skillReq cobit:skill ?skill ;
+                     cobit:requiredLevel ?requiredLevel ;
+                     cobit:currentLevel ?currentLevel .
+            
+            # Calculate gap
+            BIND(?requiredLevel - ?currentLevel AS ?gap)
+            
+            # Determine training needs
+            BIND(?gap > 0 AS ?trainingRequired)
+            
+            # Set priority
+            BIND(
+                IF(?gap >= 3, "URGENT",
+                IF(?gap >= 2, "HIGH",
+                IF(?gap >= 1, "MEDIUM",
+                "LOW"))) AS ?priority
+            )
+            
+            FILTER(?gap > 0)
+        }
+        ORDER BY DESC(?gap) ?role ?skill
+    """ .
+
+## Query 3.4: Organizational Structures Effectiveness
+:OrganizationalStructuresEffectiveness a sparql:Query ;
+    rdfs:label "Efficacia Strutture Organizzative"@it ;
+    rdfs:label "Organizational Structures Effectiveness"@en ;
+    dcterms:description "Assessment of organizational structures and committees"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?structure ?type ?purpose ?members ?meetingFrequency 
+               ?decisionsLastQuarter ?effectiveness
+        WHERE {
+            ?structure a cobit:OrganisationalStructure ;
+                      cobit:structureType ?type ;
+                      cobit:purpose ?purpose ;
+                      cobit:memberCount ?members ;
+                      cobit:meetingFrequency ?meetingFrequency ;
+                      cobit:decisionsLastQuarter ?decisionsLastQuarter ;
+                      cobit:effectivenessRating ?effectiveness .
+            
+            # Focus on governance structures
+            FILTER(?type IN ("Steering Committee", "Architecture Board", 
+                           "Risk Committee", "Security Committee"))
+        }
+        ORDER BY ?type ?structure
+    """ .
+
+# ============================================================================
+# SECTION 4: RISK MANAGEMENT AND COMPLIANCE
+# ============================================================================
+
+## Query 4.1: IT Risk Register
+:ITRiskRegister a sparql:Query ;
+    rdfs:label "Registro Rischi IT"@it ;
+    rdfs:label "IT Risk Register"@en ;
+    dcterms:description "Comprehensive IT risk register with assessments"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?risk ?category ?description ?likelihood ?impact 
+               ?inherentRisk ?controlEffectiveness ?residualRisk 
+               ?treatment ?owner ?reviewDate
+        WHERE {
+            ?risk a cobit:ITRisk ;
+                 cobit:riskCategory ?category ;
+                 rdfs:label ?description ;
+                 cobit:likelihood ?likelihood ;
+                 cobit:impact ?impact ;
+                 cobit:riskOwner ?owner ;
+                 cobit:lastReviewDate ?reviewDate .
+            
+            # Calculate inherent risk
+            BIND(?likelihood * ?impact AS ?inherentRisk)
+            
+            # Get control effectiveness
+            OPTIONAL {
+                ?risk cobit:mitigatedBy ?control .
+                ?control cobit:effectiveness ?controlEffectiveness .
+            }
+            
+            # Calculate residual risk
+            BIND(?inherentRisk * (1 - COALESCE(?controlEffectiveness/100, 0)) AS ?residualRisk)
+            
+            # Determine treatment strategy
+            BIND(
+                IF(?residualRisk > 15, "MITIGATE",
+                IF(?residualRisk > 10, "TRANSFER",
+                IF(?residualRisk > 5, "ACCEPT",
+                "MONITOR"))) AS ?treatment
+            )
+        }
+        ORDER BY DESC(?residualRisk)
+    """ .
+
+## Query 4.2: Compliance Status Dashboard
+:ComplianceStatusDashboard a sparql:Query ;
+    rdfs:label "Dashboard Stato Conformità"@it ;
+    rdfs:label "Compliance Status Dashboard"@en ;
+    dcterms:description "Regulatory and compliance requirements status"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?regulation ?type ?requirement ?complianceLevel 
+               ?lastAudit ?nextAudit ?findings ?remediationStatus
+        WHERE {
+            ?regulation a cobit:RegulatoryRequirement ;
+                       cobit:regulationType ?type ;
+                       rdfs:label ?requirement ;
+                       cobit:complianceLevel ?complianceLevel ;
+                       cobit:lastAuditDate ?lastAudit ;
+                       cobit:nextAuditDate ?nextAudit .
+            
+            OPTIONAL {
+                ?regulation cobit:hasAuditFinding ?finding .
+                ?finding cobit:findingCount ?findings ;
+                        cobit:remediationStatus ?remediationStatus .
+            }
+            
+            # Filter for upcoming audits
+            FILTER(?nextAudit >= NOW() && ?nextAudit <= NOW() + "P90D"^^xsd:duration)
+        }
+        ORDER BY ?nextAudit ?regulation
+    """ .
+
+## Query 4.3: Control Effectiveness Assessment
+:ControlEffectivenessAssessment a sparql:Query ;
+    rdfs:label "Valutazione Efficacia Controlli"@it ;
+    rdfs:label "Control Effectiveness Assessment"@en ;
+    dcterms:description "Assessment of IT control effectiveness"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?controlObjective ?control ?controlType ?frequency 
+               ?automation ?effectiveness ?testingDate ?testResult ?deficiencies
+        WHERE {
+            ?controlObjective a cobit:ControlObjective ;
+                            cobit:hasControl ?control .
+            
+            ?control rdfs:label ?controlDescription ;
+                    cobit:controlType ?controlType ;  # Preventive, Detective, Corrective
+                    cobit:frequency ?frequency ;
+                    cobit:automationLevel ?automation ;
+                    cobit:effectiveness ?effectiveness ;
+                    cobit:lastTestingDate ?testingDate ;
+                    cobit:testResult ?testResult .
+            
+            OPTIONAL {
+                ?control cobit:hasDeficiency ?deficiency .
+                ?deficiency rdfs:label ?deficiencies .
+            }
+            
+            # Focus on key controls
+            FILTER(?control cobit:isKeyControl true)
+        }
+        ORDER BY ?effectiveness ?controlObjective
+    """ .
+
+# ============================================================================
+# SECTION 5: PERFORMANCE METRICS AND KPIs
+# ============================================================================
+
+## Query 5.1: Process Performance Metrics
+:ProcessPerformanceMetrics a sparql:Query ;
+    rdfs:label "Metriche Performance Processi"@it ;
+    rdfs:label "Process Performance Metrics"@en ;
+    dcterms:description "Key performance indicators for COBIT processes"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?process ?metric ?metricType ?currentValue ?targetValue 
+               ?trend ?status ?lastMeasurement
+        WHERE {
+            ?process a cobit:Process ;
+                    cobit:hasMetric ?metric .
+            
+            ?metric rdfs:label ?metricName ;
+                   cobit:metricType ?metricType ;  # KPI, KGI, Lead, Lag
+                   cobit:currentValue ?currentValue ;
+                   cobit:targetValue ?targetValue ;
+                   cobit:trend ?trend ;
+                   cobit:lastMeasurement ?lastMeasurement .
+            
+            # Calculate status
+            BIND(
+                IF(?currentValue >= ?targetValue, "ACHIEVED",
+                IF(?currentValue >= 0.9 * ?targetValue, "NEAR TARGET",
+                IF(?currentValue >= 0.7 * ?targetValue, "BELOW TARGET",
+                "CRITICAL"))) AS ?status
+            )
+        }
+        ORDER BY ?process ?metricType ?metric
+    """ .
+
+## Query 5.2: IT Balanced Scorecard
+:ITBalancedScorecard a sparql:Query ;
+    rdfs:label "IT Balanced Scorecard"@it ;
+    rdfs:label "IT Balanced Scorecard"@en ;
+    dcterms:description "IT performance from four BSC perspectives"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?perspective ?objective ?measure ?actual ?target 
+               ?variance ?yearOverYear
+        WHERE {
+            ?scorecard a cobit:BalancedScorecard ;
+                      cobit:perspective ?perspective .
+            
+            ?perspective cobit:hasObjective ?objective .
+            
+            ?objective cobit:hasMeasure ?measure ;
+                      cobit:actualValue ?actual ;
+                      cobit:targetValue ?target ;
+                      cobit:previousYearValue ?previous .
+            
+            # Calculate variance and YoY change
+            BIND(((?actual - ?target) / ?target * 100) AS ?variance)
+            BIND(((?actual - ?previous) / ?previous * 100) AS ?yearOverYear)
+            
+            VALUES ?perspective {
+                "Financial" 
+                "Customer" 
+                "Internal Process" 
+                "Learning & Growth"
+            }
+        }
+        ORDER BY ?perspective ?objective
+    """ .
+
+## Query 5.3: Value Delivery Metrics
+:ValueDeliveryMetrics a sparql:Query ;
+    rdfs:label "Metriche Consegna del Valore"@it ;
+    rdfs:label "Value Delivery Metrics"@en ;
+    dcterms:description "IT value delivery and benefits realization"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?investment ?type ?plannedBenefits ?realizedBenefits 
+               ?roi ?paybackPeriod ?status
+        WHERE {
+            ?investment a cobit:ITInvestment ;
+                       cobit:investmentType ?type ;
+                       cobit:plannedBenefits ?plannedBenefits ;
+                       cobit:realizedBenefits ?realizedBenefits ;
+                       cobit:investmentCost ?cost .
+            
+            # Calculate ROI
+            BIND(((?realizedBenefits - ?cost) / ?cost * 100) AS ?roi)
+            
+            # Get payback period
+            OPTIONAL {
+                ?investment cobit:paybackPeriod ?paybackPeriod .
+            }
+            
+            # Determine status
+            BIND(
+                IF(?realizedBenefits >= ?plannedBenefits, "ON TRACK",
+                IF(?realizedBenefits >= 0.8 * ?plannedBenefits, "AT RISK",
+                "OFF TRACK")) AS ?status
+            )
+        }
+        ORDER BY DESC(?roi)
+    """ .
+
+# ============================================================================
+# SECTION 6: MATURITY AND CAPABILITY ASSESSMENT
+# ============================================================================
+
+## Query 6.1: Process Maturity Heat Map
+:ProcessMaturityHeatMap a sparql:Query ;
+    rdfs:label "Mappa di Calore Maturità Processi"@it ;
+    rdfs:label "Process Maturity Heat Map"@en ;
+    dcterms:description "Visual heat map data for process maturity levels"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?domain ?process ?currentMaturity ?targetMaturity ?gap ?color
+        WHERE {
+            ?domain a cobit:ProcessDomain ;
+                   rdfs:label ?domainName .
+            
+            ?process cobit:belongsToDomain ?domain ;
+                    cobit:currentMaturityLevel ?currentMaturity ;
+                    cobit:targetMaturityLevel ?targetMaturity .
+            
+            # Calculate gap
+            BIND(?targetMaturity - ?currentMaturity AS ?gap)
+            
+            # Assign color for heat map
+            BIND(
+                IF(?currentMaturity >= ?targetMaturity, "#00FF00",  # Green
+                IF(?gap = 1, "#FFFF00",                            # Yellow
+                IF(?gap = 2, "#FFA500",                            # Orange
+                "#FF0000")))                                       # Red
+                AS ?color
+            )
+        }
+        ORDER BY ?domain ?process
+    """ .
+
+## Query 6.2: Capability Model Assessment (ISO 15504)
+:CapabilityModelAssessment a sparql:Query ;
+    rdfs:label "Valutazione Modello Capacità ISO 15504"@it ;
+    rdfs:label "ISO 15504 Capability Model Assessment"@en ;
+    dcterms:description "Process capability using ISO 15504 levels"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?process ?level ?levelName ?attributes ?rating ?achievement
+        WHERE {
+            ?process a cobit:Process ;
+                    cobit:hasCapabilityAssessment ?assessment .
+            
+            ?assessment cobit:capabilityLevel ?level ;
+                       cobit:levelName ?levelName ;
+                       cobit:processAttribute ?attribute .
+            
+            ?attribute rdfs:label ?attributes ;
+                      cobit:rating ?rating ;
+                      cobit:achievementPercentage ?achievement .
+            
+            VALUES (?level ?levelName) {
+                (0 "Incomplete")
+                (1 "Performed")
+                (2 "Managed")
+                (3 "Established")
+                (4 "Predictable")
+                (5 "Optimizing")
+            }
+            
+            # Filter for current assessments only
+            FILTER(?assessment cobit:isCurrent true)
+        }
+        ORDER BY ?process ?level
+    """ .
+
+## Query 6.3: Maturity Progression Roadmap
+:MaturityProgressionRoadmap a sparql:Query ;
+    rdfs:label "Roadmap Progressione Maturità"@it ;
+    rdfs:label "Maturity Progression Roadmap"@en ;
+    dcterms:description "Roadmap for process maturity improvement"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?process ?currentLevel ?milestone ?targetLevel 
+               ?activities ?timeline ?budget ?resources
+        WHERE {
+            ?process a cobit:Process ;
+                    cobit:currentMaturityLevel ?currentLevel ;
+                    cobit:hasImprovementPlan ?plan .
+            
+            ?plan cobit:hasMilestone ?milestone .
+            
+            ?milestone cobit:targetLevel ?targetLevel ;
+                      cobit:plannedActivities ?activities ;
+                      cobit:timeline ?timeline ;
+                      cobit:estimatedBudget ?budget ;
+                      cobit:requiredResources ?resources ;
+                      cobit:sequenceOrder ?order .
+        }
+        ORDER BY ?process ?order
+    """ .
+
+# ============================================================================
+# SECTION 7: STAKEHOLDER MANAGEMENT
+# ============================================================================
+
+## Query 7.1: Stakeholder Engagement Analysis
+:StakeholderEngagementAnalysis a sparql:Query ;
+    rdfs:label "Analisi Coinvolgimento Stakeholder"@it ;
+    rdfs:label "Stakeholder Engagement Analysis"@en ;
+    dcterms:description "Analysis of stakeholder engagement levels"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?stakeholder ?type ?interest ?influence ?currentEngagement 
+               ?desiredEngagement ?engagementGap ?strategy
+        WHERE {
+            ?stakeholder a cobit:Stakeholder ;
+                        cobit:stakeholderType ?type ;
+                        cobit:interestLevel ?interest ;
+                        cobit:influenceLevel ?influence ;
+                        cobit:currentEngagement ?currentEngagement ;
+                        cobit:desiredEngagement ?desiredEngagement .
+            
+            # Calculate engagement gap
+            BIND(?desiredEngagement - ?currentEngagement AS ?engagementGap)
+            
+            # Determine engagement strategy based on interest/influence
+            BIND(
+                IF(?influence >= 4 && ?interest >= 4, "MANAGE CLOSELY",
+                IF(?influence >= 4 && ?interest < 4, "KEEP SATISFIED",
+                IF(?influence < 4 && ?interest >= 4, "KEEP INFORMED",
+                "MONITOR"))) AS ?strategy
+            )
+        }
+        ORDER BY DESC(?influence) DESC(?interest)
+    """ .
+
+## Query 7.2: Communication Effectiveness
+:CommunicationEffectiveness a sparql:Query ;
+    rdfs:label "Efficacia della Comunicazione"@it ;
+    rdfs:label "Communication Effectiveness"@en ;
+    dcterms:description "Assessment of stakeholder communication effectiveness"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?stakeholderGroup ?channel ?frequency ?satisfaction 
+               ?understanding ?actionsTaken ?improvement
+        WHERE {
+            ?communication a cobit:StakeholderCommunication ;
+                         cobit:targetGroup ?stakeholderGroup ;
+                         cobit:channel ?channel ;
+                         cobit:frequency ?frequency ;
+                         cobit:satisfactionScore ?satisfaction ;
+                         cobit:understandingLevel ?understanding ;
+                         cobit:resultingActions ?actionsTaken .
+            
+            # Calculate improvement needed
+            BIND(5 - ?satisfaction AS ?improvement)
+            
+            # Filter for channels needing improvement
+            FILTER(?satisfaction < 4)
+        }
+        ORDER BY ?satisfaction ?stakeholderGroup
+    """ .
+
+# ============================================================================
+# SECTION 8: IMPLEMENTATION AND CHANGE MANAGEMENT
+# ============================================================================
+
+## Query 8.1: COBIT Implementation Status
+:COBITImplementationStatus a sparql:Query ;
+    rdfs:label "Stato Implementazione COBIT"@it ;
+    rdfs:label "COBIT Implementation Status"@en ;
+    dcterms:description "Overall COBIT 5 implementation progress"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?phase ?phaseName ?startDate ?endDate ?completion 
+               ?deliverables ?issues ?nextSteps
+        WHERE {
+            ?implementation a cobit:ImplementationProgramme ;
+                          cobit:hasPhase ?phase .
+            
+            ?phase rdfs:label ?phaseName ;
+                  cobit:startDate ?startDate ;
+                  cobit:plannedEndDate ?endDate ;
+                  cobit:completionPercentage ?completion ;
+                  cobit:deliverables ?deliverables ;
+                  cobit:openIssues ?issues ;
+                  cobit:nextSteps ?nextSteps .
+            
+            VALUES ?phaseName {
+                "1. What are the drivers?"
+                "2. Where are we now?"
+                "3. Where do we want to be?"
+                "4. What needs to be done?"
+                "5. How do we get there?"
+                "6. Did we get there?"
+                "7. How do we keep the momentum going?"
+            }
+        }
+        ORDER BY ?phase
+    """ .
+
+## Query 8.2: Change Readiness Assessment
+:ChangeReadinessAssessment a sparql:Query ;
+    rdfs:label "Valutazione Prontezza al Cambiamento"@it ;
+    rdfs:label "Change Readiness Assessment"@en ;
+    dcterms:description "Organization readiness for COBIT implementation"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?dimension ?score ?maturity ?barriers ?enablers ?actions
+        WHERE {
+            ?readiness a cobit:ChangeReadiness ;
+                      cobit:dimension ?dimension ;
+                      cobit:readinessScore ?score ;
+                      cobit:maturityLevel ?maturity ;
+                      cobit:identifiedBarriers ?barriers ;
+                      cobit:identifiedEnablers ?enablers ;
+                      cobit:recommendedActions ?actions .
+            
+            VALUES ?dimension {
+                "Leadership Commitment"
+                "Cultural Alignment"
+                "Resource Availability"
+                "Skills and Knowledge"
+                "Communication"
+                "Change History"
+            }
+        }
+        ORDER BY ?score
+    """ .
+
+## Query 8.3: Quick Wins Identification
+:QuickWinsIdentification a sparql:Query ;
+    rdfs:label "Identificazione Quick Wins"@it ;
+    rdfs:label "Quick Wins Identification"@en ;
+    dcterms:description "Identify quick wins for COBIT implementation"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?initiative ?process ?effort ?impact ?timeframe 
+               ?cost ?riskLevel ?score
+        WHERE {
+            ?initiative a cobit:ImprovementInitiative ;
+                       cobit:targetProcess ?process ;
+                       cobit:effortRequired ?effort ;
+                       cobit:expectedImpact ?impact ;
+                       cobit:implementationTime ?timeframe ;
+                       cobit:estimatedCost ?cost ;
+                       cobit:riskLevel ?riskLevel .
+            
+            # Calculate quick win score (high impact, low effort)
+            BIND((?impact * 10) / (?effort * ?timeframe) AS ?score)
+            
+            # Filter for quick wins (low effort, high impact, short time)
+            FILTER(?effort <= 3 && ?impact >= 3 && ?timeframe <= 90)
+        }
+        ORDER BY DESC(?score)
+        LIMIT 10
+    """ .
+
+# ============================================================================
+# SECTION 9: AUDIT AND ASSURANCE
+# ============================================================================
+
+## Query 9.1: IT Audit Universe
+:ITAuditUniverse a sparql:Query ;
+    rdfs:label "Universo di Audit IT"@it ;
+    rdfs:label "IT Audit Universe"@en ;
+    dcterms:description "Complete IT audit universe with risk ratings"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?auditableEntity ?type ?riskRating ?lastAudit 
+               ?auditFrequency ?nextAudit ?scope
+        WHERE {
+            ?auditableEntity a cobit:AuditableEntity ;
+                           cobit:entityType ?type ;
+                           cobit:inherentRisk ?riskRating ;
+                           cobit:lastAuditDate ?lastAudit ;
+                           cobit:requiredFrequency ?auditFrequency ;
+                           cobit:auditScope ?scope .
+            
+            # Calculate next audit date
+            BIND(?lastAudit + ?auditFrequency AS ?nextAudit)
+            
+            # Prioritize by risk and time since last audit
+            FILTER(?nextAudit <= NOW() + "P180D"^^xsd:duration)
+        }
+        ORDER BY DESC(?riskRating) ?nextAudit
+    """ .
+
+## Query 9.2: Audit Findings Tracking
+:AuditFindingsTracking a sparql:Query ;
+    rdfs:label "Tracciamento Risultanze di Audit"@it ;
+    rdfs:label "Audit Findings Tracking"@en ;
+    dcterms:description "Track and monitor audit findings and recommendations"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?audit ?finding ?severity ?process ?recommendation 
+               ?managementResponse ?targetDate ?status ?overdueDays
+        WHERE {
+            ?audit a cobit:ITAudit ;
+                  cobit:hasAuditFinding ?finding .
+            
+            ?finding cobit:severity ?severity ;
+                    cobit:relatedProcess ?process ;
+                    cobit:recommendation ?recommendation ;
+                    cobit:managementResponse ?managementResponse ;
+                    cobit:targetCompletionDate ?targetDate ;
+                    cobit:status ?status .
+            
+            # Calculate overdue days
+            BIND(
+                IF(?status != "Closed" && ?targetDate < NOW(),
+                   xsd:integer((NOW() - ?targetDate) / "P1D"^^xsd:duration),
+                   0) AS ?overdueDays
+            )
+            
+            # Filter for open findings
+            FILTER(?status IN ("Open", "In Progress"))
+        }
+        ORDER BY ?severity ?overdueDays DESC
+    """ .
+
+# ============================================================================
+# SECTION 10: RESOURCE OPTIMIZATION
+# ============================================================================
+
+## Query 10.1: IT Resource Utilization
+:ITResourceUtilization a sparql:Query ;
+    rdfs:label "Utilizzo Risorse IT"@it ;
+    rdfs:label "IT Resource Utilization"@en ;
+    dcterms:description "Analysis of IT resource utilization and optimization"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?resourceType ?allocated ?utilized ?utilizationRate 
+               ?cost ?valueGenerated ?efficiency
+        WHERE {
+            ?resource a cobit:ITResource ;
+                     cobit:resourceType ?resourceType ;
+                     cobit:allocatedCapacity ?allocated ;
+                     cobit:utilizedCapacity ?utilized ;
+                     cobit:totalCost ?cost ;
+                     cobit:valueGenerated ?valueGenerated .
+            
+            # Calculate utilization rate
+            BIND((?utilized / ?allocated * 100) AS ?utilizationRate)
+            
+            # Calculate efficiency
+            BIND(?valueGenerated / ?cost AS ?efficiency)
+            
+            VALUES ?resourceType {
+                "Infrastructure"
+                "Applications"
+                "Human Resources"
+                "Information"
+                "Services"
+            }
+        }
+        ORDER BY ?utilizationRate
+    """ .
+
+## Query 10.2: IT Budget Performance
+:ITBudgetPerformance a sparql:Query ;
+    rdfs:label "Performance Budget IT"@it ;
+    rdfs:label "IT Budget Performance"@en ;
+    dcterms:description "IT budget allocation and performance analysis"@en ;
+    sparql:queryString """
+        PREFIX cobit: <http://www.semanticweb.org/cobit5/ontology#>
+        
+        SELECT ?category ?budgeted ?actual ?variance ?percentVariance 
+               ?explanation ?correctionAction
+        WHERE {
+            ?budget a cobit:ITBudget ;
+                   cobit:budgetCategory ?category ;
+                   cobit:budgetedAmount ?budgeted ;
+                   cobit:actualAmount ?actual .
+            
+            # Calculate variance
+            BIND(?actual - ?budgeted AS ?variance)
+            BIND((?variance / ?budgeted * 100) AS ?percentVariance)
+            
+            # Get explanations for significant variances
+            OPTIONAL {
+                ?budget cobit:varianceExplanation ?explanation ;
+                       cobit:correctionAction ?correctionAction .
+                FILTER(ABS(?percentVariance) > 10)
+            }
+        }
+        ORDER BY DESC(ABS(?percentVariance))
+    """ .
+
+# ============================================================================
+# SHACL VALIDATION SHAPES FOR COBIT 5
+# ============================================================================
+
+## SHACL Shape for Process Validation
+:ProcessValidationShape a sh:NodeShape ;
+    sh:targetClass cobit:Process ;
+    sh:property [
+        sh:path cobit:processCode ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^(EDM|APO|BAI|DSS|MEA)[0-9]{2}$" ;
+        sh:message "Process must have valid COBIT process code"@en
+    ] ;
+    sh:property [
+        sh:path cobit:currentCapabilityLevel ;
+        sh:minCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 5 ;
+        sh:message "Process capability level must be between 0 and 5"@en
+    ] ;
+    sh:property [
+        sh:path cobit:belongsToDomain ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class cobit:ProcessDomain ;
+        sh:message "Process must belong to exactly one domain"@en
+    ] .
+
+## SHACL Shape for Goal Validation
+:GoalValidationShape a sh:NodeShape ;
+    sh:targetClass cobit:EnterpriseGoal ;
+    sh:property [
+        sh:path cobit:goalCategory ;
+        sh:minCount 1 ;
+        sh:in ("Financial" "Customer" "Internal" "Learning and Growth") ;
+        sh:message "Goal must have valid BSC perspective"@en
+    ] ;
+    sh:property [
+        sh:path cobit:achievementLevel ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 100 ;
+        sh:message "Achievement level must be percentage between 0 and 100"@en
+    ] .
+
+## SHACL Shape for Risk Validation
+:RiskValidationShape a sh:NodeShape ;
+    sh:targetClass cobit:ITRisk ;
+    sh:property [
+        sh:path cobit:likelihood ;
+        sh:minCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 5 ;
+        sh:message "Risk likelihood must be between 1 and 5"@en
+    ] ;
+    sh:property [
+        sh:path cobit:impact ;
+        sh:minCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 5 ;
+        sh:message "Risk impact must be between 1 and 5"@en
+    ] ;
+    sh:property [
+        sh:path cobit:riskOwner ;
+        sh:minCount 1 ;
+        sh:class cobit:Stakeholder ;
+        sh:message "Risk must have an owner"@en
+    ] .
+
+## SHACL Shape for Enabler Validation
+:EnablerValidationShape a sh:NodeShape ;
+    sh:targetClass cobit:Enabler ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:minCount 1 ;
+        sh:in (
+            "Principles, Policies and Frameworks"
+            "Processes"
+            "Organisational Structures"
+            "Culture, Ethics and Behaviour"
+            "Information"
+            "Services, Infrastructure and Applications"
+            "People, Skills and Competencies"
+        ) ;
+        sh:message "Must be one of the seven COBIT enablers"@en
+    ] ;
+    sh:property [
+        sh:path cobit:maturityScore ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 5 ;
+        sh:message "Enabler maturity must be between 0 and 5"@en
+    ] .
+
+# ============================================================================
+# END OF COBIT 5 QUERY COLLECTION
+# ============================================================================
+
+# This file provides:
+# 1. Governance and Management process queries
+# 2. Goals cascade and alignment queries  
+# 3. Seven enablers assessment queries
+# 4. Risk management and compliance queries
+# 5. Performance metrics and KPI queries
+# 6. Maturity and capability assessment queries
+# 7. Stakeholder management queries
+# 8. Implementation and change management queries
+# 9. Audit and assurance queries
+# 10. Resource optimization queries
+# 11. SHACL validation shapes for data integrity
+
+# Designed to support:
+# - COBIT 5 implementation programs
+# - IT governance assessments
+# - Process improvement initiatives
+# - Risk and compliance management
+# - Performance measurement
+# - Stakeholder reporting
+# - Audit planning and tracking

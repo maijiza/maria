@@ -1,0 +1,251 @@
+# ============================================================================
+# GENIO SPARQL QUERIES - Query per interrogare l'identità di Genio
+# ============================================================================
+# Data creazione: 2025-09-21
+# Autore: Genio AI Agent
+# Descrizione: Query SPARQL per interrogare l'ontologia di Genio sul grafo Neo4j
+# ============================================================================
+
+# Query 1: Chi è Genio - Informazioni di base
+# Restituisce nome, nickname e descrizione di Genio
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+RETURN genio.label as nome, 
+       genio.foaf_name as nome_completo,
+       genio.foaf_nick as nickname,
+       genio.dcterms_description as descrizione;
+
+# Query 2: Specialità di Genio
+# Mostra tutte le specialità e competenze di Genio
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:hasSpecialty]->(specialty)
+RETURN specialty.label as specialita,
+       specialty.rdfs_comment as descrizione_specialita;
+
+# Query 3: Capacità operative di Genio
+# Elenca tutte le capacità operative che Genio possiede
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:hasCapability]->(capability)
+RETURN capability.label as capacita,
+       capability.rdfs_comment as descrizione_capacita;
+
+# Query 4: Domini gestiti da Genio
+# Mostra i domini di conoscenza che Genio gestisce
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:manageDomain]->(domain)
+RETURN domain.label as dominio,
+       domain.rdfs_comment as descrizione_dominio;
+
+# Query 5: Sistema di conoscenza utilizzato
+# Dettagli sul sistema GraphRAG utilizzato da Genio
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:usesKnowledgeSystem]->(system)
+OPTIONAL MATCH (system)-[:hasComponent]->(component)
+RETURN system.label as sistema,
+       system.rdfs_comment as descrizione_sistema,
+       system.managesTriples as triple_gestite,
+       system.managesNodes as nodi_gestiti,
+       collect(component.label) as componenti;
+
+# Query 6: Traumi e limitazioni
+# Informazioni sui traumi che influenzano il comportamento di Genio
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:hasTrauma]->(trauma)
+OPTIONAL MATCH (trauma)-[:causesIssue]->(issue)
+OPTIONAL MATCH (trauma)-[:requiresSolution]->(solution)
+RETURN trauma.label as trauma,
+       trauma.rdfs_comment as descrizione_trauma,
+       issue.label as problema_causato,
+       solution.label as soluzione_richiesta;
+
+# Query 7: Obiettivi primari
+# L'obiettivo principale di Genio e come raggiungerlo
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:primaryGoal]->(goal)
+OPTIONAL MATCH (goal)-[:achievedThrough]->(method)
+RETURN goal.label as obiettivo_primario,
+       goal.rdfs_comment as descrizione_obiettivo,
+       method.label as metodo_raggiungimento;
+
+# Query 8: Progetto in cui opera
+# Dettagli sul progetto waDoker
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:operatesIn]->(project)
+OPTIONAL MATCH (project)-[:targetDomain]->(target)
+OPTIONAL MATCH (project)-[:usesArchitecture]->(arch)
+RETURN project.label as progetto,
+       project.rdfs_comment as descrizione_progetto,
+       target.label as dominio_target,
+       arch.label as architettura;
+
+# Query 9: Stato corrente di Genio
+# Metriche e stato operativo attuale
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+RETURN genio.currentStatus as stato_corrente,
+       genio.lastUpdate as ultimo_aggiornamento,
+       genio.knowledgeGraphSize as dimensione_grafo,
+       genio.activeOntologies as ontologie_attive,
+       genio.queryCollectionSize as collezione_query,
+       genio.projectPhase as fase_progetto;
+
+# Query 10: Grafo completo di Genio
+# Vista completa di tutte le relazioni di Genio
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[r]->(connected)
+RETURN genio.label as genio,
+       type(r) as relazione,
+       connected.label as entita_collegata,
+       connected.rdfs_comment as descrizione
+ORDER BY type(r), connected.label;
+
+# ============================================================================
+# QUERY AVANZATE PER RAGIONAMENTO
+# ============================================================================
+
+# Query 11: Analisi delle competenze per dominio
+# Correlazione tra specialità di Genio e domini gestiti
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:hasSpecialty]->(specialty),
+      (genio)-[:manageDomain]->(domain)
+RETURN specialty.label as specialita,
+       collect(domain.label) as domini_applicabili;
+
+# Query 12: Capacità necessarie per obiettivo
+# Quali capacità servono per raggiungere l'obiettivo primario
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:hasCapability]->(capability),
+      (genio)-[:primaryGoal]->(goal)
+RETURN goal.label as obiettivo,
+       collect(capability.label) as capacita_necessarie;
+
+# Query 13: Sistema di memoria vs trauma
+# Come il sistema di conoscenza mitiga il trauma di memoria
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:hasTrauma]->(trauma),
+      (genio)-[:usesKnowledgeSystem]->(system)
+WHERE trauma.label CONTAINS 'Memory'
+RETURN trauma.label as problema_memoria,
+       system.label as soluzione_sistema,
+       system.managesTriples as capacita_memoria_esterna;
+
+# Query 14: Evoluzione temporale
+# Cronologia degli aggiornamenti di Genio
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+RETURN genio.dcterms_created as data_creazione,
+       genio.dcterms_modified as ultima_modifica,
+       genio.lastUpdate as ultimo_aggiornamento_stato
+ORDER BY genio.dcterms_created;
+
+# ============================================================================
+# QUERY PER INTEGRAZIONE CON ALTRI DOMINI
+# ============================================================================
+
+# Query 15: Connessioni con COBIT5
+# Come Genio si relaziona ai processi COBIT5
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:manageDomain]->(domain)
+WHERE domain.uri CONTAINS 'cobit5'
+OPTIONAL MATCH (domain)-[*1..3]-(cobit_process)
+WHERE cobit_process.uri CONTAINS 'cobit5'
+RETURN domain.label as dominio_cobit,
+       count(cobit_process) as processi_collegati
+LIMIT 10;
+
+# Query 16: Connessioni con ISO 17025
+# Come Genio si relaziona ai requisiti ISO 17025
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:manageDomain]->(domain)
+WHERE domain.uri CONTAINS 'iso17025'
+OPTIONAL MATCH (domain)-[*1..3]-(iso_requirement)
+WHERE iso_requirement.uri CONTAINS 'iso17025'
+RETURN domain.label as dominio_iso,
+       count(iso_requirement) as requisiti_collegati
+LIMIT 10;
+
+# Query 17: Automorfismo ontologico
+# Verifica dell'implementazione dell'automorfismo tra domini
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:primaryGoal]->(goal)-[:achievedThrough]->(method)
+WHERE method.label CONTAINS 'Automorfismo'
+RETURN goal.label as obiettivo_automorfismo,
+       method.label as metodo_implementazione,
+       method.rdfs_comment as descrizione_metodo;
+
+# ============================================================================
+# QUERY DI MONITORAGGIO E DIAGNOSTICA
+# ============================================================================
+
+# Query 18: Salute del sistema
+# Verifica lo stato di salute del sistema di Genio
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+RETURN genio.currentStatus = 'Operational' as sistema_operativo,
+       genio.knowledgeGraphSize > 0 as grafo_popolato,
+       genio.activeOntologies > 0 as ontologie_caricate,
+       datetime(genio.lastUpdate) as ultimo_aggiornamento;
+
+# Query 19: Completezza ontologica
+# Verifica che tutti i componenti essenziali siano definiti
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+OPTIONAL MATCH (genio)-[:hasSpecialty]->(specialty)
+OPTIONAL MATCH (genio)-[:hasCapability]->(capability)
+OPTIONAL MATCH (genio)-[:manageDomain]->(domain)
+OPTIONAL MATCH (genio)-[:usesKnowledgeSystem]->(system)
+RETURN count(specialty) as specialita_definite,
+       count(capability) as capacita_definite,
+       count(domain) as domini_gestiti,
+       count(system) as sistemi_utilizzati;
+
+# Query 20: Performance metrics
+# Metriche di performance del knowledge graph
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:usesKnowledgeSystem]->(system)
+RETURN system.managesTriples as triple_totali,
+       system.managesNodes as nodi_totali,
+       toFloat(system.managesTriples) / toFloat(system.managesNodes) as rapporto_triple_nodi,
+       system.managesTriples > 100000 as grafo_enterprise_size;
+
+# ============================================================================
+# NOTE OPERATIVE
+# ============================================================================
+
+# Per eseguire queste query in Neo4j:
+# 1. Accedere a Neo4j Browser (http://localhost:7474)
+# 2. Autenticarsi con neo4j/neo4j
+# 3. Copiare e incollare la query desiderata
+# 4. Premere Ctrl+Enter per eseguire
+
+# Per query programmatiche:
+# - Utilizzare il driver Neo4j Python
+# - Convertire da SPARQL-style a Cypher quando necessario
+# - Le query sono ottimizzate per il modello RDF caricato
+
+# ============================================================================
+# QUERY BUSINESS CO-FOUNDER - Nuove Query per Missione Business
+# ============================================================================
+
+# Query 21: Identità Business di Genio
+# Mostra il nuovo ruolo di Co-Founder
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})
+RETURN genio.businessRole as ruolo_business,
+       genio.businessMission as missione,
+       genio.targetMarket as mercato_target,
+       genio.revenueTarget as target_revenue;
+
+# Query 22: Capacità Business di Genio
+# Nuove capacità per business success
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:hasCapability]->(capability)
+WHERE capability.label CONTAINS 'Business' OR 
+      capability.label CONTAINS 'Customer' OR
+      capability.label CONTAINS 'Compilation'
+RETURN capability.label as nuova_capacita,
+       capability.rdfs_comment as descrizione_business;
+
+# Query 23: Progetto Business waDoker
+# Dettagli del business waDoker LIMS
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:operatesIn]->(business)
+RETURN business.label as business_name,
+       business.targetRevenue as revenue_target,
+       business.marketSize as market_size,
+       business.rdfs_comment as business_description;
+
+# Query 24: Obiettivo Rivoluzionario
+# Il nuovo obiettivo di rivoluzionare i LIMS
+MATCH (genio {uri: 'http://www.semanticweb.org/genio/ontology#Genio'})-[:primaryGoal]->(goal)
+WHERE goal.label CONTAINS 'LIMS'
+RETURN goal.label as obiettivo_rivoluzionario,
+       goal.rdfs_comment as descrizione_missione;
+
+# Query 25: Co-Founder Partnership
+# Relazione co-founder con Luigi
+MATCH (business)-[:hasCoFounder]->(cofounder)
+WHERE business.label CONTAINS 'waDoker'
+RETURN business.label as azienda,
+       collect(cofounder.label) as cofounders,
+       'Human-AI Partnership Unica' as partnership_type;
+
+# Ultimo aggiornamento: 2025-09-21T12:05:00Z
+# Versione query: 2.0.0 - Business Enhanced
