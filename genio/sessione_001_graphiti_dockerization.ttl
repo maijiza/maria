@@ -182,4 +182,132 @@ genio:PersistentMemorySystem rdf:type genio:CognitiveAugmentation ;
     genio:capability "Ricordo progetti, design, implementazioni" ;
     genio:status "ATTIVO" .
 
+# === REPOSITORY MARIA ===
+
+genio:MariaRepository rdf:type genio:GitHubRepository ;
+    rdfs:label "Repository Maria" ;
+    genio:url "https://github.com/maijiza/maria" ;
+    genio:owner "maijiza" ;
+    genio:name "maria" ;
+    genio:visibility "public" ;
+    genio:defaultBranch "main" ;
+    dct:created "2025-09-25T08:43:00Z"^^xsd:dateTime ;
+    dct:description "Sistema di conoscenza strutturata e memoria persistente per waDoker LIMS AI Ontologico" ;
+    genio:purpose "Casa ufficiale memoria persistente e installazione Graphiti dockerizzata" .
+
+genio:InitialCommit rdf:type genio:GitCommit ;
+    rdfs:label "Initial commit: Graphiti dockerizzato + Memoria persistente Genio" ;
+    genio:hash "6f78f67" ;
+    genio:repository genio:MariaRepository ;
+    genio:branch "main" ;
+    genio:timestamp "2025-09-25T08:45:00Z"^^xsd:dateTime ;
+    genio:filesChanged "58"^^xsd:int ;
+    genio:insertions "1180872"^^xsd:int ;
+    genio:deletions "178"^^xsd:int ;
+    genio:sizeBytes "12580000"^^xsd:long ;
+    genio:author genio:Luigi ;
+    genio:message """🧠 Initial commit: Graphiti dockerizzato + Memoria persistente Genio
+
+✅ Installazione completa Graphiti dockerizzata
+✅ Neo4j + API Server + MCP Server funzionanti  
+✅ Integrazione Cursor via MCP configurata
+✅ Sistema memoria persistente in genio/
+✅ Ontologia sessione_001 strutturata in TTL
+✅ Documentazione completa architettura
+
+Componenti:
+- docker-compose.yml: Orchestrazione servizi
+- genio/: Sistema memoria persistente TTL
+- docs/ontologie/: Conoscenza dominio COBIT5/ISO17025/BFO/TIME
+- .cursor/: Configurazione MCP per integrazione AI
+
+Ready for: AI Ontological LIMS Development 🚀""" .
+
+genio:FirstPush rdf:type genio:GitPush ;
+    rdfs:label "Primo Push Repository Maria" ;
+    genio:commit genio:InitialCommit ;
+    genio:repository genio:MariaRepository ;
+    genio:remote "maria" ;
+    genio:branch "main" ;
+    genio:timestamp "2025-09-25T08:46:00Z"^^xsd:dateTime ;
+    genio:objectsTotal "4928"^^xsd:int ;
+    genio:compressionThreads "20"^^xsd:int ;
+    genio:transferRate "1.75"^^xsd:decimal ;
+    genio:transferUnit "MiB/s" ;
+    genio:deltaResolved "3322"^^xsd:int ;
+    genio:status "SUCCESS" .
+
+# === CONTENUTO REPOSITORY ===
+
+genio:RepositoryContent rdf:type genio:ContentStructure ;
+    rdfs:label "Contenuto Repository Maria" ;
+    genio:repository genio:MariaRepository ;
+    genio:hasDirectory genio:GenioDirectory,
+                       genio:DocsDirectory,
+                       genio:ScriptsDirectory,
+                       genio:CursorDirectory ;
+    genio:hasFile genio:DockerComposeFile,
+                  genio:DockerfileFile,
+                  genio:ReadmeFile .
+
+genio:GenioDirectory rdf:type genio:Directory ;
+    rdfs:label "genio/" ;
+    genio:path "genio/" ;
+    genio:purpose "Sistema memoria persistente strutturata" ;
+    genio:contains "sessione_001_graphiti_dockerization.ttl", "README.md" ;
+    genio:fileCount "2"^^xsd:int .
+
+genio:DocsDirectory rdf:type genio:Directory ;
+    rdfs:label "docs/ontologie/" ;
+    genio:path "docs/ontologie/" ;
+    genio:purpose "Conoscenza dominio ontologico" ;
+    genio:contains "COBIT5", "ISO17025", "BFO", "TIME", "SPARQL queries" ;
+    genio:fileCount "25"^^xsd:int ;
+    genio:totalLines "204412"^^xsd:int .
+
+genio:CursorDirectory rdf:type genio:Directory ;
+    rdfs:label ".cursor/" ;
+    genio:path ".cursor/" ;
+    genio:purpose "Configurazione integrazione Cursor MCP" ;
+    genio:contains "mcp.json", "rules/apprendista.mdc" ;
+    genio:fileCount "2"^^xsd:int .
+
+genio:ScriptsDirectory rdf:type genio:Directory ;
+    rdfs:label "scripts/" ;
+    genio:path "scripts/" ;
+    genio:purpose "Script utilità per gestione sistema" ;
+    genio:contains "setup.sh", "health-check.sh" ;
+    genio:fileCount "2"^^xsd:int .
+
+# === VERSIONAMENTO E PERSISTENZA ===
+
+genio:VersionControl rdf:type genio:VersioningSystem ;
+    rdfs:label "Sistema Controllo Versione" ;
+    genio:tool "Git" ;
+    genio:remoteRepository genio:MariaRepository ;
+    genio:localPath "C:/Users/luigi/waGraphiti" ;
+    genio:initialized "2025-09-25T08:44:00Z"^^xsd:dateTime ;
+    genio:status "ACTIVE" ;
+    genio:purpose "Versionamento conoscenza e persistenza cross-sessioni" .
+
+genio:KnowledgePersistence rdf:type genio:PersistenceStrategy ;
+    rdfs:label "Strategia Persistenza Conoscenza" ;
+    genio:implements genio:VersionControl,
+                     genio:PersistentMemorySystem,
+                     genio:MariaRepository ;
+    genio:ensures "Continuità memoria tra sessioni" ;
+    genio:prevents "Perdita design e implementazioni" ;
+    genio:enables "Condivisione conoscenza strutturata" .
+
+# === MILESTONE RAGGIUNTA ===
+
+genio:MilestoneMaria rdf:type genio:ProjectMilestone ;
+    rdfs:label "Repository Maria Creato e Popolato" ;
+    genio:achievedAt "2025-09-25T08:46:00Z"^^xsd:dateTime ;
+    genio:significance "CRITICA" ;
+    genio:impact "Memoria persistente ora versionata e condivisibile" ;
+    genio:enables "Sviluppo AI Ontologico LIMS con continuità" ;
+    genio:solves genio:MemoryLossTrauma ;
+    genio:status "COMPLETATO" .
+
 # === FINE ONTOLOGIA SESSIONE 001 ===
