@@ -1,0 +1,109 @@
+{
+  "system_overview": {
+    "name": "waGraphiti API Ecosystem",
+    "version": "2.0.0",
+    "components": [
+      "MCP Server",
+      "Memvid Integration",
+      "Autonomous Engine",
+      "Docling Service",
+      "OntologieService"
+    ],
+    "total_apis": 19,
+    "cobit5_coverage": [
+      "EDM01",
+      "BAI02",
+      "BAI06",
+      "BAI09",
+      "DSS03",
+      "MEA01",
+      "MEA02",
+      "MEA03"
+    ]
+  },
+  "mcp_tools_catalog": [
+    {
+      "name": "health_check",
+      "domain": "MEA",
+      "process": "MEA01",
+      "function": "Monitor Performance",
+      "layer": "core",
+      "iso17025": "Cl.8.8"
+    },
+    {
+      "name": "add_memory",
+      "domain": "BAI",
+      "process": "BAI02",
+      "function": "Manage Requirements",
+      "layer": "business",
+      "iso17025": "Cl.7.5"
+    },
+    {
+      "name": "search_memory_nodes",
+      "domain": "DSS",
+      "process": "DSS03",
+      "function": "Manage Problems",
+      "layer": "business",
+      "iso17025": "Cl.7.7"
+    },
+    {
+      "name": "search_memory_facts",
+      "domain": "DSS",
+      "process": "DSS03",
+      "function": "Manage Problems",
+      "layer": "business",
+      "iso17025": "Cl.7.7"
+    },
+    {
+      "name": "start_autonomous_monitoring",
+      "domain": "EDM",
+      "process": "EDM01",
+      "function": "Ensure Governance Framework",
+      "layer": "business",
+      "iso17025": "Cl.5.3"
+    },
+    {
+      "name": "get_compliance_status",
+      "domain": "MEA",
+      "process": "MEA03",
+      "function": "Monitor Compliance",
+      "layer": "business",
+      "iso17025": "Cl.8.9"
+    },
+    {
+      "name": "integrate_cobit5_ontologies",
+      "domain": "EDM",
+      "process": "EDM01",
+      "function": "Ensure Governance Framework",
+      "layer": "technical",
+      "iso17025": "Cl.5.3"
+    }
+  ],
+  "cobit5_domain_mapping": {
+    "EDM": {
+      "tools": 2,
+      "focus": "Governance Framework",
+      "business_value": "Strategic Control"
+    },
+    "BAI": {
+      "tools": 4,
+      "focus": "Build and Implement",
+      "business_value": "Solution Delivery"
+    },
+    "DSS": {
+      "tools": 6,
+      "focus": "Service and Support",
+      "business_value": "Operational Excellence"
+    },
+    "MEA": {
+      "tools": 5,
+      "focus": "Monitor and Assess",
+      "business_value": "Performance Management"
+    }
+  },
+  "layer_distribution": {
+    "business": 12,
+    "technical": 5,
+    "core": 2
+  }
+}

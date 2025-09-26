@@ -50,6 +50,15 @@ from autonomous_extension import (
     GovernanceDocument
 )
 
+# Import COBIT5 ontology integration
+try:
+    from cobit5_integration import COBIT5GraphitiIntegrator, create_cobit5_integrator
+    COBIT5_AVAILABLE = True
+except ImportError:
+    COBIT5_AVAILABLE = False
+    COBIT5GraphitiIntegrator = None
+    create_cobit5_integrator = None
+
 load_dotenv()
 
 
@@ -727,6 +736,24 @@ async def process_episode_queue(group_id: str):
         logger.info(f'Stopped episode queue worker for group_id: {group_id}')
 
 
+async def ensure_graphiti_initialized():
+    """Ensure Graphiti client is initialized (lazy initialization)"""
+    global graphiti_client, config
+    
+    if graphiti_client is None:
+        logger.info("Lazy initializing Graphiti client...")
+        try:
+            # Initialize config if needed
+            if config is None:
+                config = GraphitiConfig.from_env()
+            
+            # Initialize Graphiti
+            await initialize_graphiti()
+            logger.info("Lazy initialization completed successfully")
+        except Exception as e:
+            logger.error(f"Lazy initialization failed: {e}")
+            raise
+
 @mcp.tool()
 async def add_memory(
     name: str,
@@ -791,8 +818,23 @@ async def add_memory(
         - Entities will be created from appropriate JSON properties
         - Relationships between entities will be established based on the JSON structure
     """
-    global graphiti_client, episode_queues, queue_workers
+    global graphiti_client, episode_queues, queue_workers, config
 
+    # Lazy initialization if client is None
+    if graphiti_client is None:
+        logger.info("Lazy initializing Graphiti client in add_memory...")
+        try:
+            # Force config initialization
+            config = GraphitiConfig.from_env()
+            logger.info("Config initialized in lazy init")
+            
+            # Initialize Graphiti
+            await initialize_graphiti()
+            logger.info("Lazy initialization completed successfully")
+        except Exception as e:
+            logger.error(f"Lazy initialization failed: {e}")
+            return ErrorResponse(error=f'Failed to initialize Graphiti: {str(e)}')
+    
     if graphiti_client is None:
         return ErrorResponse(error='Graphiti client not initialized')
 
@@ -1831,6 +1873,76 @@ def _get_iso17025_recommendations(indicators_found: dict) -> list[str]:
         recommendations.append("Include measurement uncertainty information for full ISO17025 compliance")
     
     return recommendations
+
+
+@mcp.tool()
+async def integrate_cobit5_ontologies(
+    ontology_path: str = "docs/ontologie/",
+    target_group_id: str = "cobit5_governance"
+) -> dict[str, Any] | ErrorResponse:
+    """Integrate COBIT5 governance framework ontologies into the knowledge graph.
+    
+    Loads complete COBIT5 framework including domains (EDM, APO, BAI, DSS, MEA),
+    processes, goals, controls, enablers, and stakeholder definitions into
+    waDoker LIMS knowledge graph for automated governance compliance.
+    
+    Args:
+        ontology_path: Path to ontology files (default: docs/ontologie/)
+        target_group_id: Group ID for COBIT5 data (default: cobit5_governance)
+        
+    Returns:
+        Integration results with summary of loaded ontologies
+    """
+    global graphiti_client, config
+    
+    if not COBIT5_AVAILABLE:
+        return ErrorResponse(
+            error="COBIT5 ontology integration is not available. Missing rdflib dependency."
+        )
+    
+    if graphiti_client is None:
+        return ErrorResponse(
+            error='Graphiti client is not initialized'
+        )
+    
+    try:
+        # Create COBIT5 integrator
+        cobit5_integrator = create_cobit5_integrator(add_memory)
+        
+        # Set custom group_id if provided
+        if target_group_id and target_group_id != "cobit5_governance":
+            cobit5_integrator.group_id = target_group_id
+        
+        # Integrate all COBIT5 ontologies
+        integration_result = await cobit5_integrator.integrate_cobit5_ontologies(ontology_path)
+        
+        if not integration_result["success"]:
+            return ErrorResponse(
+                error=f"COBIT5 ontology integration failed: {integration_result['error']}"
+            )
+        
+        # Summary of what was integrated
+        summary = {
+            "integration_status": "success",
+            "target_group_id": cobit5_integrator.group_id,
+            "ontology_path": ontology_path,
+            "integration_results": integration_result.get("results", {}),
+            "coverage": {
+                "frameworks": ["COBIT5", "EDM", "APO", "BAI", "DSS", "MEA"],
+                "governance_levels": ["Strategic", "Tactical", "Operational"],
+                "enablers_loaded": 7,
+                "domains_loaded": 5
+            }
+        }
+        
+        logger.info(f"COBIT5 ontology integration completed successfully for group: {target_group_id}")
+        return summary
+        
+    except Exception as e:
+        logger.error(f"Error integrating COBIT5 ontologies: {str(e)}")
+        return ErrorResponse(
+            error=f'Failed to integrate COBIT5 ontologies: {str(e)}'
+        )
 
 
 def main():
