@@ -39,5 +39,42 @@ services:
       - "8000:8000"
     command: ["uv", "run", "graphiti_mcp_server.py", "--transport", "sse"]
 
+  redis:
+    image: redis:7-alpine
+    container_name: graphiti-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass graphiti_cache_2024
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # NEW: Docling Document Processing Service (Official)
+  docling-service:
+    image: ghcr.io/docling-project/docling-serve:latest
+    container_name: wadoker-docling-service
+    restart: unless-stopped
+    ports:
+      - "8002:5001"  # docling-serve actual port is 5001
+    environment:
+      - DOCLING_LOG_LEVEL=INFO
+    volumes:
+      - docling_models:/app/models
+      - docling_temp:/tmp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s  # More time for model download
+      retries: 5
+
 volumes:
   neo4j_data:
+  redis_data:
+  docling_models:  # NEW: Persistent storage for AI models
+  docling_temp:    # NEW: Temporary files storage

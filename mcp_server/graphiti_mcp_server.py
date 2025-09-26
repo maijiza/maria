@@ -12,9 +12,9 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any, TypedDict, cast
 
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider  # type: ignore
 from dotenv import load_dotenv
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP  # type: ignore
 from openai import AsyncAzureOpenAI
 from pydantic import BaseModel, Field
 
@@ -28,12 +28,27 @@ from graphiti_core.llm_client.azure_openai_client import AzureOpenAILLMClient
 from graphiti_core.llm_client.config import LLMConfig
 from graphiti_core.llm_client.openai_client import OpenAIClient
 from graphiti_core.nodes import EpisodeType, EpisodicNode
+
+# Docling Integration
+try:
+    from docling_integration import get_docling_integration, cleanup_docling_integration
+    DOCLING_AVAILABLE = True
+except ImportError:
+    DOCLING_AVAILABLE = False
 from graphiti_core.search.search_config_recipes import (
     NODE_HYBRID_SEARCH_NODE_DISTANCE,
     NODE_HYBRID_SEARCH_RRF,
 )
 from graphiti_core.search.search_filters import SearchFilters
 from graphiti_core.utils.maintenance.graph_data_operations import clear_data
+
+# Import autonomous extension
+from autonomous_extension import (
+    initialize_autonomous_engine,
+    get_autonomous_engine,
+    ComplianceViolation,
+    GovernanceDocument
+)
 
 load_dotenv()
 
@@ -121,10 +136,12 @@ class Procedure(BaseModel):
     )
 
 
-ENTITY_TYPES: dict[str, BaseModel] = {
+ENTITY_TYPES: dict[str, type[BaseModel]] = {
     'Requirement': Requirement,  # type: ignore
     'Preference': Preference,  # type: ignore
     'Procedure': Procedure,  # type: ignore
+    'ComplianceViolation': ComplianceViolation,  # type: ignore
+    'GovernanceDocument': GovernanceDocument,  # type: ignore
 }
 
 
@@ -571,10 +588,32 @@ mcp = FastMCP(
 # Initialize Graphiti client
 graphiti_client: Graphiti | None = None
 
+@mcp.tool()
+async def health_check() -> dict[str, str | bool]:
+    """Health check tool for monitoring MCP server status."""
+    global graphiti_client
+    
+    if graphiti_client is None:
+        return {"status": "unhealthy", "message": "Graphiti client not initialized", "healthy": False}
+    
+    try:
+        await graphiti_client.driver.client.verify_connectivity()  # type: ignore
+        return {"status": "healthy", "message": "MCP server operational", "healthy": True}
+    except Exception as e:
+        return {"status": "unhealthy", "message": f"Neo4j error: {str(e)}", "healthy": False}
+
 
 async def initialize_graphiti():
     """Initialize the Graphiti client with the configured settings."""
     global graphiti_client, config
+    
+    # Initialize autonomous engine
+    redis_config = {
+        'host': 'redis',  # Docker service name
+        'port': 6379,
+        'password': 'graphiti_cache_2024'
+    }
+    initialize_autonomous_engine(redis_config)
 
     try:
         # Create LLM client if possible
@@ -1159,6 +1198,234 @@ async def get_status() -> StatusResponse:
         )
 
 
+@mcp.tool()
+async def start_autonomous_monitoring(directory_path: str) -> SuccessResponse | ErrorResponse:
+    """Start autonomous monitoring of governance directory.
+    
+    Args:
+        directory_path: Path to directory containing governance documents to monitor
+    """
+    engine = get_autonomous_engine()
+    if engine is None:
+        return ErrorResponse(error='Autonomous engine not initialized')
+    
+    try:
+        result = await engine.start_monitoring(directory_path)
+        
+        if 'error' in result:
+            return ErrorResponse(error=result['error'])
+        
+        # Add monitoring info to graph memory
+        if graphiti_client:
+            await add_memory(
+                name=f"Autonomous Monitoring Started",
+                episode_body=f"Started monitoring governance directory: {directory_path}. Found {result['files_found']} governance files for compliance tracking.",
+                source="text",
+                source_description="autonomous monitoring initialization"
+            )
+        
+        return SuccessResponse(
+            message=f"Autonomous monitoring started for {directory_path}: {result['files_found']} files found"
+        )
+        
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f'Error starting autonomous monitoring: {error_msg}')
+        return ErrorResponse(error=f'Error starting autonomous monitoring: {error_msg}')
+
+
+@mcp.tool() 
+async def get_compliance_status() -> dict[str, Any] | ErrorResponse:
+    """Get current autonomous compliance monitoring status."""
+    engine = get_autonomous_engine()
+    if engine is None:
+        return ErrorResponse(error='Autonomous engine not initialized')
+    
+    try:
+        return engine.get_status()
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f'Error getting compliance status: {error_msg}')
+        return ErrorResponse(error=f'Error getting compliance status: {error_msg}')
+
+
+@mcp.tool()
+async def get_governance_violations(limit: int = 20) -> dict[str, Any] | ErrorResponse:
+    """Get recent governance violations detected by autonomous monitoring."""
+    engine = get_autonomous_engine()
+    if engine is None:
+        return ErrorResponse(error='Autonomous engine not initialized')
+    
+    try:
+        all_violations = []
+        for doc_path, doc in engine.monitored_documents.items():
+            for violation in doc.violations:
+                all_violations.append({
+                    'document_path': doc_path,
+                    'compliance_score': doc.compliance_score,
+                    'last_check': doc.last_check.isoformat(),
+                    **violation
+                })
+        
+        # Sort by timestamp (most recent first) and limit
+        recent_violations = sorted(
+            all_violations,
+            key=lambda x: x.get('timestamp', ''),
+            reverse=True
+        )[:limit]
+        
+        return {
+            'violations': recent_violations,
+            'total_violations': len(all_violations),
+            'documents_monitored': len(engine.monitored_documents),
+            'average_compliance': sum(doc.compliance_score for doc in engine.monitored_documents.values()) / len(engine.monitored_documents) if engine.monitored_documents else 1.0
+        }
+        
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f'Error getting violations: {error_msg}')
+        return ErrorResponse(error=f'Error getting violations: {error_msg}')
+
+
+@mcp.tool()
+async def suggest_autonomous_fixes(confidence_threshold: float = 0.8) -> dict[str, Any] | ErrorResponse:
+    """🤝 HITL: Get autonomous suggested fixes for violations that require human approval.
+    
+    Args:
+        confidence_threshold: Minimum confidence score for suggestions (0.0-1.0)
+    """
+    engine = get_autonomous_engine()
+    if engine is None:
+        return ErrorResponse(error='Autonomous engine not initialized')
+    
+    try:
+        suggestions = engine.get_suggested_fixes(confidence_threshold)
+        
+        # HITL Protocol: Annuncio cosa intendo proporre
+        logger.info(f"🤝 HITL: Found {len(suggestions)} autonomous suggestions above {confidence_threshold} confidence")
+        
+        return {
+            'message': f'Found {len(suggestions)} autonomous suggestions requiring human approval',
+            'suggestions': suggestions,
+            'confidence_threshold': confidence_threshold,
+            'hitl_protocol': 'All suggestions require human approval before application',
+            'total_available': len(suggestions)
+        }
+        
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f'Error getting suggestions: {error_msg}')
+        return ErrorResponse(error=f'Error getting autonomous suggestions: {error_msg}')
+
+
+@mcp.tool()
+async def apply_autonomous_fix(document_path: str, violation_type: str, approved: bool) -> dict[str, Any] | ErrorResponse:
+    """🤝 HITL: Apply autonomous suggested fix with human approval workflow.
+    
+    Args:
+        document_path: Path to document to fix
+        violation_type: Type of violation to fix
+        approved: Human approval decision (True/False)
+    """
+    engine = get_autonomous_engine()
+    if engine is None:
+        return ErrorResponse(error='Autonomous engine not initialized')
+    
+    try:
+        # HITL Protocol: Procedo solo dopo approvazione esplicita
+        if not approved:
+            logger.info(f"🤝 HITL: Fix for {violation_type} in {document_path} NOT APPROVED by human")
+            return {
+                'status': 'cancelled_by_human',
+                'message': 'Fix cancelled - human approval not granted',
+                'document_path': document_path,
+                'violation_type': violation_type,
+                'action_taken': 'none'
+            }
+        
+        logger.info(f"🤝 HITL: Fix for {violation_type} in {document_path} APPROVED by human - proceeding")
+        
+        result = await engine.apply_suggested_fix(document_path, violation_type, approved)
+        
+        # HITL Protocol: Valido il risultato
+        if result.get('status') == 'applied':
+            logger.info(f"🤝 HITL: Fix applied successfully - backup created at {result.get('backup_created')}")
+            
+            # Save fix application to knowledge graph
+            if graphiti_client:
+                await add_memory(
+                    name=f"Autonomous Fix Applied",
+                    episode_body=f"HITL approved autonomous fix for {violation_type} in {document_path}. Status: {result.get('status')}. Backup: {result.get('backup_created')}",
+                    source="text",
+                    source_description="autonomous fix application with HITL approval",
+                    group_id="autonomous_lims"
+                )
+        
+        return result
+        
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f'Error applying autonomous fix: {error_msg}')
+        return ErrorResponse(error=f'Error applying autonomous fix: {error_msg}')
+
+
+@mcp.tool()
+async def preview_autonomous_fix(document_path: str, violation_type: str) -> dict[str, Any] | ErrorResponse:
+    """🤝 HITL: Preview autonomous suggested fix before human approval decision.
+    
+    Args:
+        document_path: Path to document to preview fix
+        violation_type: Type of violation to preview fix for
+    """
+    engine = get_autonomous_engine()
+    if engine is None:
+        return ErrorResponse(error='Autonomous engine not initialized')
+    
+    try:
+        # Find the violation
+        target_violation = None
+        for doc_path, doc in engine.monitored_documents.items():
+            if doc_path == document_path:
+                for violation in doc.violations:
+                    if violation.get('type') == violation_type:
+                        target_violation = violation
+                        break
+                break
+        
+        if not target_violation:
+            return ErrorResponse(error=f'Violation {violation_type} not found in {document_path}')
+        
+        # HITL Protocol: Mostro cosa intendo fare prima di chiedere approvazione
+        logger.info(f"🤝 HITL: Previewing fix for {violation_type} in {document_path}")
+        
+        # Read current content
+        with open(document_path, 'r', encoding='utf-8', errors='ignore') as f:
+            current_content = f.read()
+        
+        # Generate preview of proposed changes
+        proposed_content = await engine._apply_fix_logic(current_content, target_violation, document_path)
+        
+        return {
+            'document_path': document_path,
+            'violation_type': violation_type,
+            'framework': target_violation.get('framework'),
+            'severity': target_violation.get('severity'),
+            'description': target_violation.get('description'),
+            'suggested_solution': target_violation.get('suggested_solution'),
+            'confidence_score': target_violation.get('confidence_score'),
+            'current_content_preview': current_content[:500] + '...' if len(current_content) > 500 else current_content,
+            'proposed_content_preview': proposed_content[:500] + '...' if len(proposed_content) > 500 else proposed_content,
+            'changes_detected': current_content != proposed_content,
+            'hitl_status': 'awaiting_human_approval',
+            'next_action': 'Use apply_autonomous_fix with approved=True/False'
+        }
+        
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f'Error previewing fix: {error_msg}')
+        return ErrorResponse(error=f'Error previewing autonomous fix: {error_msg}')
+
+
 async def initialize_server() -> MCPConfig:
     """Parse CLI arguments and initialize the Graphiti server configuration."""
     global config
@@ -1244,6 +1511,326 @@ async def run_mcp_server():
             f'Running MCP server with SSE transport on {mcp.settings.host}:{mcp.settings.port}'
         )
         await mcp.run_sse_async()
+
+
+# ========================================
+# DOCLING INTEGRATION MCP TOOLS
+# ========================================
+
+@mcp.tool()
+async def process_document_with_docling(
+    file_path: str,
+    episode_name: str | None = None,
+    extract_tables: bool = True,
+    extract_figures: bool = True,
+    ocr_enabled: bool = True,
+    source_description: str | None = None
+) -> dict[str, Any] | ErrorResponse:
+    """Process a document using Docling AI models and add to knowledge graph.
+    
+    Processes PDF, DOCX, or HTML documents using advanced AI models for layout analysis,
+    table extraction, and OCR, then ingests the structured data into the knowledge graph.
+    
+    Args:
+        file_path: Path to the document file to process
+        episode_name: Optional name for the knowledge graph episode
+        extract_tables: Whether to extract table structures (default: True)
+        extract_figures: Whether to extract figures and images (default: True)
+        ocr_enabled: Whether to perform OCR on scanned content (default: True)
+        source_description: Optional description of the document source
+        
+    Returns:
+        Success response with processing results or error details
+    """
+    global graphiti_client
+    
+    if not DOCLING_AVAILABLE:
+        return ErrorResponse(
+            error="Docling integration is not available. Please check service status."
+        )
+    
+    if graphiti_client is None:
+        return ErrorResponse(
+            error='Graphiti client is not initialized'
+        )
+    
+    try:
+        from pathlib import Path
+        
+        # Validate file exists
+        if not Path(file_path).exists():
+            return ErrorResponse(
+                error=f"Document file not found: {file_path}"
+            )
+        
+        # Check file type
+        supported_extensions = {'.pdf', '.docx', '.html', '.htm'}
+        file_extension = Path(file_path).suffix.lower()
+        
+        if file_extension not in supported_extensions:
+            return ErrorResponse(
+                error=f"Unsupported file type: {file_extension}. Supported: {', '.join(supported_extensions)}"
+            )
+        
+        # Get Docling integration
+        docling_integration = await get_docling_integration(graphiti_client)
+        
+        # Check service health
+        if not await docling_integration.health_check():
+            return ErrorResponse(
+                error="Docling service is not available. Please check if the service is running."
+            )
+        
+        logger.info(f"Processing document with Docling: {file_path}")
+        
+        # Process document and add to knowledge graph
+        result = await docling_integration.document_to_knowledge_graph(
+            file_path=file_path,
+            episode_name=episode_name,
+            source_description=source_description,
+            extract_tables=extract_tables,
+            extract_figures=extract_figures,
+            ocr_enabled=ocr_enabled
+        )
+        
+        if result["success"]:
+            return {
+                "status": "success",
+                "message": "Document processed and added to knowledge graph successfully",
+                "episode_id": result["episode_id"],
+                "processing_details": {
+                    "processing_time_seconds": result["docling_result"]["processing_time_seconds"],
+                    "pages_processed": result["docling_result"]["pages_processed"],
+                    "tables_found": len(result["docling_result"]["tables"]),
+                    "figures_found": len(result["docling_result"]["figures"]),
+                    "confidence_score": result["docling_result"]["confidence_score"],
+                    "text_length": len(result["docling_result"]["text_content"])
+                },
+                "knowledge_graph_ingestion": result["knowledge_graph_ingestion"]
+            }
+        else:
+            return ErrorResponse(
+                error=f"Document processing failed: {result.get('error', 'Unknown error')}"
+            )
+            
+    except Exception as e:
+        logger.error(f"Error processing document with Docling: {str(e)}")
+        return ErrorResponse(
+            error=f'Failed to process document: {str(e)}'
+        )
+
+
+@mcp.tool()
+async def get_docling_service_status() -> dict[str, Any] | ErrorResponse:
+    """Get status and capabilities of the Docling document processing service.
+    
+    Returns information about the Docling service health, AI models status,
+    supported document formats, and processing capabilities.
+    """
+    global graphiti_client
+    
+    if not DOCLING_AVAILABLE:
+        return ErrorResponse(
+            error="Docling integration is not available."
+        )
+    
+    if graphiti_client is None:
+        return ErrorResponse(
+            error='Graphiti client is not initialized'
+        )
+    
+    try:
+        # Get Docling integration
+        docling_integration = await get_docling_integration(graphiti_client)
+        
+        # Check service health
+        is_healthy = await docling_integration.health_check()
+        
+        result = {
+            "service_available": is_healthy,
+            "integration_stats": docling_integration.get_integration_stats()
+        }
+        
+        if is_healthy:
+            # Get service info
+            service_info = await docling_integration.get_service_info()
+            if service_info:
+                result["service_info"] = service_info
+            
+            # Get models status
+            models_status = await docling_integration.get_models_status()
+            if models_status:
+                result["models_status"] = models_status
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error getting Docling service status: {str(e)}")
+        return ErrorResponse(
+            error=f'Failed to get service status: {str(e)}'
+        )
+
+
+@mcp.tool()
+async def analyze_document_compliance(
+    file_path: str,
+    compliance_framework: str = "ISO17025",
+    extract_metadata: bool = True
+) -> dict[str, Any] | ErrorResponse:
+    """Analyze a document for compliance with specific frameworks (e.g., ISO17025).
+    
+    Processes a document and analyzes its content for compliance with specified
+    frameworks, extracting relevant metadata and compliance indicators.
+    
+    Args:
+        file_path: Path to the document file to analyze
+        compliance_framework: Framework to analyze against (default: ISO17025)
+        extract_metadata: Whether to extract detailed metadata (default: True)
+        
+    Returns:
+        Compliance analysis results with identified elements and scores
+    """
+    global graphiti_client
+    
+    if not DOCLING_AVAILABLE:
+        return ErrorResponse(
+            error="Docling integration is not available."
+        )
+    
+    if graphiti_client is None:
+        return ErrorResponse(
+            error='Graphiti client is not initialized'
+        )
+    
+    try:
+        from pathlib import Path
+        
+        if not Path(file_path).exists():
+            return ErrorResponse(
+                error=f"Document file not found: {file_path}"
+            )
+        
+        # Get Docling integration
+        docling_integration = await get_docling_integration(graphiti_client)
+        
+        # Process document
+        docling_result = await docling_integration.process_document_file(
+            file_path=file_path,
+            extract_tables=True,
+            extract_figures=True,
+            ocr_enabled=True
+        )
+        
+        if not docling_result.success:
+            return ErrorResponse(
+                error=f"Failed to process document: {docling_result.error_details}"
+            )
+        
+        # Analyze for compliance (simplified implementation)
+        compliance_analysis = {
+            "framework": compliance_framework,
+            "document_info": {
+                "filename": Path(file_path).name,
+                "pages_processed": docling_result.pages_processed,
+                "processing_time": docling_result.processing_time_seconds,
+                "confidence_score": docling_result.confidence_score
+            },
+            "content_analysis": {
+                "text_length": len(docling_result.text_content),
+                "tables_found": len(docling_result.tables),
+                "figures_found": len(docling_result.figures),
+                "metadata_available": bool(docling_result.metadata)
+            }
+        }
+        
+        # Framework-specific analysis
+        if compliance_framework.upper() == "ISO17025":
+            compliance_analysis["iso17025_indicators"] = _analyze_iso17025_compliance(docling_result)
+        
+        # Add metadata if requested
+        if extract_metadata and docling_result.metadata:
+            compliance_analysis["document_metadata"] = docling_result.metadata
+        
+        return compliance_analysis
+        
+    except Exception as e:
+        logger.error(f"Error analyzing document compliance: {str(e)}")
+        return ErrorResponse(
+            error=f'Failed to analyze document compliance: {str(e)}'
+        )
+
+
+def _analyze_iso17025_compliance(docling_result) -> dict[str, Any]:
+    """Analyze document content for ISO17025 compliance indicators."""
+    
+    text_content = docling_result.text_content.lower()
+    
+    # ISO17025 key terms and indicators
+    iso17025_terms = {
+        "accreditation": ["accreditation", "accredited", "accreditation body"],
+        "calibration": ["calibration", "calibrate", "calibrated"],
+        "measurement": ["measurement", "measuring", "measure"],
+        "uncertainty": ["uncertainty", "measurement uncertainty"],
+        "traceability": ["traceability", "traceable", "trace"],
+        "quality": ["quality system", "quality management", "quality assurance"],
+        "competence": ["competent", "competence", "technical competence"],
+        "laboratory": ["laboratory", "lab", "testing laboratory"],
+        "standard": ["standard", "reference standard", "iso"],
+        "procedure": ["procedure", "method", "protocol"]
+    }
+    
+    indicators_found = {}
+    total_score = 0
+    
+    for category, terms in iso17025_terms.items():
+        category_score = 0
+        found_terms = []
+        
+        for term in terms:
+            if term in text_content:
+                category_score += 1
+                found_terms.append(term)
+        
+        if found_terms:
+            indicators_found[category] = {
+                "score": min(category_score, 3),  # Max 3 points per category
+                "terms_found": found_terms[:5]  # Limit to first 5 terms
+            }
+            total_score += min(category_score, 3)
+    
+    # Calculate compliance score (0-100)
+    max_possible_score = len(iso17025_terms) * 3
+    compliance_percentage = (total_score / max_possible_score) * 100
+    
+    return {
+        "compliance_score": round(compliance_percentage, 1),
+        "indicators_found": indicators_found,
+        "total_indicators": len(indicators_found),
+        "recommendations": _get_iso17025_recommendations(indicators_found)
+    }
+
+
+def _get_iso17025_recommendations(indicators_found: dict) -> list[str]:
+    """Generate recommendations based on ISO17025 analysis."""
+    
+    recommendations = []
+    required_categories = ["accreditation", "calibration", "measurement", "quality", "traceability"]
+    
+    missing_categories = []
+    for category in required_categories:
+        if category not in indicators_found:
+            missing_categories.append(category)
+    
+    if missing_categories:
+        recommendations.append(f"Consider adding content related to: {', '.join(missing_categories)}")
+    
+    if len(indicators_found) < 3:
+        recommendations.append("Document may need more comprehensive ISO17025-related content")
+    
+    if "uncertainty" not in indicators_found:
+        recommendations.append("Include measurement uncertainty information for full ISO17025 compliance")
+    
+    return recommendations
 
 
 def main():
