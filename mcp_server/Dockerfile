@@ -35,6 +35,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Copy application code
 COPY graphiti_mcp_server.py ./
+COPY autonomous_extension.py ./
+COPY cobit5_integration.py ./
+COPY docling_integration.py ./
 
 # Change ownership to app user
 RUN chown -Rv app:app /app
